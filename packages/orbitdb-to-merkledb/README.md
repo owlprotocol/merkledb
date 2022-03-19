@@ -16,3 +16,6 @@ Listen for database changes
 
 ## Links
 https://github.com/orbitdb/orbit-db/blob/main/GUIDE.md#replicating-a-database
+
+## Bugs
+* Initial IPFS Node has incorrect identity

@@ -2,6 +2,8 @@ import * as IPFS from 'ipfs';
 import OrbitDB from 'orbit-db';
 import { DATABASE_ADDRESS, PRIV_KEY, PEER_ID } from './environment.js';
 
+console.debug({ PEER_ID, PRIV_KEY })
+
 async function main() {
     // Create IPFS instance
     const ipfsOptions = {
@@ -39,17 +41,18 @@ async function main() {
     // Create OrbitDB instance
     const orbitdb = await OrbitDB.createInstance(ipfs);
 
-    const db = await orbitdb.keyvalue('/orbitdb/zdpuAt5mxFVEZjsBZ8cZ1FZNn33YUA2WnBpATPCZQTuXam5Sx');
-    console.debug(db.address.toString());
-    //await db.put('Bob', { name: 'Bob' }, { pin: true });
+    //https://github.com/orbitdb/orbit-db/blob/main/GUIDE.md#persistency
+    const db1 = await orbitdb.keyvalue('kv1');
+    await db1.load();
+    console.debug(db1.all)
 
-    /*
-    const db = await orbitdb.docs('db1', { indexBy: 'name' });
-    await db.put({ name: 'Alice' });
-    await db.put({ name: 'Bob' });
-    */
+    await db1.put('Bob', { name: 'Bob' }, { pin: true });
+    await db1.close();
 
-    console.debug(db.all);
+    const db2 = await orbitdb.keyvalue('kv1');
+    await db2.load();
+    console.debug(db2.all);
+
     // Create database instance
     //console.debug(DATABASE_ADDRESS);
     //const db = await orbitdb.docs(DATABASE_ADDRESS);
