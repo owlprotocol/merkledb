@@ -24,6 +24,7 @@
     "ethers": "^5.6.1",
     "hardhat": "^2.9.1",
     "hardhat-gas-reporter": "^1.0.8",
+    "merk": "^2.1.4",
     "prettier": "^2.6.0",
     "prettier-plugin-solidity": "^1.0.0-beta.13",
     "solhint": "^3.3.7",
@@ -31,5 +32,12 @@
     "ts-node": "^10.7.0",
     "typechain": "^5.2.0",
     "typescript": "^4.6.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.5.0"
+  },
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile"
   }
 }
