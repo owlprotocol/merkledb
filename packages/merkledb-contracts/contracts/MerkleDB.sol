@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "./IMerkleDB.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "hardhat/console.sol";
 
-contract MerkleDB is IMerkleDB {
+contract MerkleDB is IMerkleDB, Ownable {
     bytes32 public merkleRoot;
     bytes32 public merkleTreeIPFS;
     bytes32 public databaseIPFS;
@@ -16,16 +16,14 @@ contract MerkleDB is IMerkleDB {
         override
         returns (bool)
     {
-        bool res = MerkleProof.verify(path, merkleRoot, keccak256(bytesLeaf));
-        console.log(res);
-        return res;
+        return MerkleProof.verify(path, merkleRoot, keccak256(bytesLeaf));
     }
 
     function updateMerkleDB(
         bytes32 _merkleRoot,
         bytes32 _merkleTreeIPFS,
         bytes32 _databaseIPFS
-    ) external override {
+    ) external override onlyOwner {
         merkleRoot = _merkleRoot;
         merkleTreeIPFS = _merkleTreeIPFS;
         databaseIPFS = _databaseIPFS;

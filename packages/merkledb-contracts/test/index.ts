@@ -1,45 +1,54 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-//@ts-ignore
-import { Merk, verifyProof } from "merk";
-
-describe("Greeter", function () {
-    it("Should return the new greeting once it's changed", async function () {
-        const Greeter = await ethers.getContractFactory("Greeter");
-        const greeter = await Greeter.deploy("Hello, world!");
-        await greeter.deployed();
-
-        expect(await greeter.greet()).to.equal("Hello, world!");
-
-        const setGreetingTx = await greeter.setGreeting("Hola, mundo!");
-
-        // wait until the transaction is mined
-        await setGreetingTx.wait();
-
-        expect(await greeter.greet()).to.equal("Hola, mundo!");
-    });
-});
+import { MerkleTree } from "merkletreejs";
+import { keccak256 } from "ethers/lib/utils";
+import crypto from "crypto";
+import { toHex, padLeft } from "web3-utils";
 
 describe("MerkleDB", () => {
-    it("Should verify merkle proof", async () => {
-        const MerkleDB = await ethers.getContractFactory("MerkleDB");
-        const merkleDB = await MerkleDB.deploy();
-
-        await merkleDB.deployed();
-
-        let keys: Buffer[] = [];
-        let values: Buffer[] = [];
-        for (let i = 0; i < 256; i++) {
-            keys.push(Buffer.from(`key${i}`));
-            values.push(Buffer.from(`value${i}`));
-        }
-
-        // const db = Merk("state.db");
-
-        // const update = db.batch();
-
-        // keys.forEach((e, i) => update.put(e, values[i]).commitSync());
-
-        // console.log(db.rootHash());
-    });
+    for (let i = 2; i < 256; i++) {
+        it(`${i} Should verify merkle proof`, async () => {
+            await test(i);
+        });
+    }
 });
+
+async function test(n: number) {
+    const MerkleDB = await ethers.getContractFactory("MerkleDB");
+    const merkleDB = await MerkleDB.deploy();
+
+    await merkleDB.deployed();
+
+    let valuesRaw: number[] = [];
+    for (let i = 0; i < n; i++) {
+        valuesRaw.push(i);
+    }
+
+    const values = valuesRaw.map((e) => padLeft(toHex(e), 64));
+
+    const tree = new MerkleTree(values, keccak256, {
+        hashLeaves: true,
+        sortPairs: true,
+    });
+    const root = tree.getRoot().toString("hex");
+    const leaf = values[1];
+    const leafHash = keccak256(leaf).toString();
+    const proof = tree.getProof(leafHash);
+    const verify = tree.verify(proof, leafHash, root);
+
+    expect(verify).to.be.equal(true);
+
+    const randomBytes = crypto.randomBytes(32).toString("hex");
+
+    const update = await merkleDB.updateMerkleDB(
+        "0x" + root,
+        "0x" + randomBytes,
+        "0x" + randomBytes
+    );
+    await update.wait();
+    const proofHex = proof.map((e) => "0x" + e.data.toString("hex"));
+
+    const contractVerify = await merkleDB.merkleProofData(leaf, proofHex);
+
+    expect(contractVerify).to.be.equal(true);
+}
