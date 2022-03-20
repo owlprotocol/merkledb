@@ -1,5 +1,6 @@
 {
-  "name": "hardhat-project",
+  "name": "@owlprotocol/merkledb-contracts",
+  "version": "0.0.1",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.0.3",
@@ -13,7 +14,6 @@
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
     "chai": "^4.3.6",
-    "crypto-js": "^4.1.1",
     "dotenv": "^10.0.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.5.0",
@@ -41,5 +41,10 @@
   "scripts": {
     "test": "hardhat test",
     "compile": "hardhat compile"
-  }
+  },
+  "files": [
+    "artifacts",
+    "contracts",
+    "typechain"
+  ]
 }

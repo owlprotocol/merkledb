@@ -4,9 +4,11 @@ specifiers:
   '@nomiclabs/hardhat-ethers': ^2.0.5
   '@nomiclabs/hardhat-etherscan': ^3.0.3
   '@nomiclabs/hardhat-waffle': ^2.0.3
+  '@openzeppelin/contracts': ^4.5.0
   '@typechain/ethers-v5': ^7.2.0
   '@typechain/hardhat': ^2.3.1
   '@types/chai': ^4.3.0
+  '@types/crypto-js': ^4.1.1
   '@types/mocha': ^9.1.0
   '@types/node': ^12.20.47
   '@typescript-eslint/eslint-plugin': ^4.33.0
@@ -24,6 +26,7 @@ specifiers:
   ethers: ^5.6.1
   hardhat: ^2.9.1
   hardhat-gas-reporter: ^1.0.8
+  merkletreejs: ^0.2.31
   prettier: ^2.6.0
   prettier-plugin-solidity: ^1.0.0-beta.13
   solhint: ^3.3.7
@@ -32,6 +35,9 @@ specifiers:
   typechain: ^5.2.0
   typescript: ^4.6.2
 
+dependencies:
+  '@openzeppelin/contracts': 4.5.0
+
 devDependencies:
   '@nomiclabs/hardhat-ethers': 2.0.5_ethers@5.6.1+hardhat@2.9.1
   '@nomiclabs/hardhat-etherscan': 3.0.3_hardhat@2.9.1
@@ -39,6 +45,7 @@ devDependencies:
   '@typechain/ethers-v5': 7.2.0_c93484f8d968a7d0633457cff7c43c3c
   '@typechain/hardhat': 2.3.1_hardhat@2.9.1+typechain@5.2.0
   '@types/chai': 4.3.0
+  '@types/crypto-js': 4.1.1
   '@types/mocha': 9.1.0
   '@types/node': 12.20.47
   '@typescript-eslint/eslint-plugin': 4.33.0_65e88d2733f36d3624b406e590cf0b3b
@@ -56,6 +63,7 @@ devDependencies:
   ethers: 5.6.1
   hardhat: 2.9.1
   hardhat-gas-reporter: 1.0.8_hardhat@2.9.1
+  merkletreejs: 0.2.31
   prettier: 2.6.0
   prettier-plugin-solidity: 1.0.0-beta.19_prettier@2.6.0
   solhint: 3.3.7
@@ -706,6 +714,10 @@ packages:
       hardhat: 2.9.1
     dev: true
 
+  /@openzeppelin/contracts/4.5.0:
+    resolution: {integrity: sha512-fdkzKPYMjrRiPK6K4y64e6GzULR7R7RwxSigHS8DDp7aWDeoReqsQI+cxHV1UuhAqX69L1lAaWDxenfP+xiqzA==}
+    dev: false
+
   /@resolver-engine/core/0.3.3:
     resolution: {integrity: sha512-eB8nEbKDJJBi5p5SrvrvILn4a0h42bKtbCTri3ZxCGt6UvoQyp7HnGOfki944bUjBSHKK3RvgfViHn+kqdXtnQ==}
     dependencies:
@@ -928,6 +940,10 @@ packages:
     resolution: {integrity: sha512-eHE4cQPoj6ngxBZMvVf6Hw7Mh4jMW4U9lpGmS5GBPB9RYxlFg+CHaVN7ErNY4W9XfLIEn20b4VDYaIrbq0q4uA==}
     dependencies:
       '@types/node': 12.20.47
+    dev: true
+
+  /@types/crypto-js/4.1.1:
+    resolution: {integrity: sha512-BG7fQKZ689HIoc5h+6D2Dgq1fABRa0RbBWKBd9SP/MVRVXROflpm5fhwyATX5duFmbStzyzyycPB8qUYKDH3NA==}
     dev: true
 
   /@types/form-data/0.0.33:
@@ -2284,6 +2300,10 @@ packages:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
     dev: true
 
+  /buffer-reverse/1.0.1:
+    resolution: {integrity: sha1-SSg8jvpvkBvAH6MwTQYCeXGuL2A=}
+    dev: true
+
   /buffer-to-arraybuffer/0.0.5:
     resolution: {integrity: sha1-YGSkD6dutDxyOrqe+PbhIW0QURo=}
     dev: true
@@ -2871,6 +2891,10 @@ packages:
       public-encrypt: 4.0.3
       randombytes: 2.1.0
       randomfill: 1.0.4
+    dev: true
+
+  /crypto-js/3.3.0:
+    resolution: {integrity: sha512-DIT51nX0dCfKltpRiXV+/TVZq+Qq2NgF4644+K7Ttnla7zEzqc+kjJyiB96BHNyUTBxyjzRcZYpUdZa+QAqi6Q==}
     dev: true
 
   /d/1.0.1:
@@ -6361,6 +6385,17 @@ packages:
       semaphore-async-await: 1.5.1
     dev: true
 
+  /merkletreejs/0.2.31:
+    resolution: {integrity: sha512-dnK2sE43OebmMe5Qnq1wXvvMIjZjm1u6CcB2KeW6cghlN4p21OpCUr2p56KTVf20KJItNChVsGnimcscp9f+yw==}
+    engines: {node: '>= 7.6.0'}
+    dependencies:
+      bignumber.js: 9.0.2
+      buffer-reverse: 1.0.1
+      crypto-js: 3.3.0
+      treeify: 1.1.0
+      web3-utils: 1.7.1
+    dev: true
+
   /methods/1.1.2:
     resolution: {integrity: sha1-VSmk1nZUE07cxSZmVoNbD4Ua/O4=}
     engines: {node: '>= 0.6'}
@@ -8834,6 +8869,11 @@ packages:
 
   /tr46/0.0.3:
     resolution: {integrity: sha1-gYT9NH2snNwYWZLzpmIuFLnZq2o=}
+    dev: true
+
+  /treeify/1.1.0:
+    resolution: {integrity: sha512-1m4RA7xVAJrSGrrXGs0L3YTwyvBs2S8PbRHaLZAkFw7JR8oIFwYtysxlBZhYIa7xSyiYJKZ3iGrrk55cGA3i9A==}
+    engines: {node: '>=0.6'}
     dev: true
 
   /trim-right/1.0.1:
