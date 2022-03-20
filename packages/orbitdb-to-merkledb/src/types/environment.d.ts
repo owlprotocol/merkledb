@@ -2,9 +2,12 @@ declare global {
     namespace NodeJS {
         interface ProcessEnv {
             NODE_ENV: 'development' | 'production';
-            DATABASE_ADDRESS: string;
+            ORBITDB_ADDRESS: string;
             PEER_ID: string;
             PRIV_KEY: string;
+            MERKLE_DB_CONTRACT: string;
+            ETH_RPC: string;
+            ETH_PRIVATE_KEY: string;
         }
     }
 }

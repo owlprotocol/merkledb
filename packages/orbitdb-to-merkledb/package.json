@@ -41,11 +41,14 @@
     "lint:staged": "lint-staged"
   },
   "dependencies": {
+    "@owlprotocol/merkledb-contracts": "../merkledb-contracts",
     "cbor": "^8.1.0",
     "ipfs": "^0.62.1",
     "lodash": "^4.17.21",
     "merkletreejs": "^0.2.31",
     "orbit-db": "^0.28.3",
+    "web3": "^1.7.1",
+    "web3-eth-contract": "^1.7.1",
     "web3-utils": "^1.7.1"
   },
   "devDependencies": {
@@ -62,6 +65,7 @@
     "eslint-import-resolver-typescript": "^2.5.0",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-prettier": "^4.0.0",
+    "ganache": "^7.0.3",
     "mocha": "^9.0.3",
     "prettier": "^2.6.0",
     "typescript": "4.6.2"

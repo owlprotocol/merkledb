@@ -15,8 +15,8 @@ export async function writeTestDataToDB(db: any) {
 export function testDataToMerkleTree() {
     const rows = people;
     const rowsCBOR = rows.map((r) => cbor.encode(toSortedKeysObject(r)));
-    console.debug('Creating test Merkle Tree');
-    console.debug({ rows, rowsCBOR: rowsCBOR.map((r) => r.toString('hex')) });
+    //console.debug('Creating test Merkle Tree');
+    //console.debug({ rows, rowsCBOR: rowsCBOR.map((r) => r.toString('hex')) });
 
     const tree = new MerkleTree(rowsCBOR, keccak256, {
         hashLeaves: true,
