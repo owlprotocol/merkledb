@@ -34,12 +34,12 @@
     "start": "node lib/index.js"
   },
   "dependencies": {
-    "@owlprotocol/merkledb-contracts": "../merkledb-contracts",
     "cbor": "^8.1.0",
     "ipfs": "^0.62.1",
     "lodash": "^4.17.21",
     "merkletreejs": "^0.2.31",
     "orbit-db": "^0.28.3",
+    "orbit-db-identity-provider": "^0.4.0",
     "web3": "^1.7.1",
     "web3-eth-contract": "^1.7.1",
     "web3-utils": "^1.7.1"

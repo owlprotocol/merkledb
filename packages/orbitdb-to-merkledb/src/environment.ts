@@ -1,6 +1,9 @@
-import dotenv from 'dotenv';
+export const NODE_ENV = process.env.NODE_ENV;
 
-dotenv.config();
+if (NODE_ENV === 'development' && !NODE_ENV) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require('dotenv').config();
+}
 
 export const PRIV_KEY = process.env.PRIV_KEY;
 export const PEER_ID = process.env.PEER_ID;

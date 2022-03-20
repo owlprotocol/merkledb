@@ -1,6 +1,6 @@
 import OrbitDB from 'orbit-db';
-import MerkleDBArtifact from '@owlprotocol/merkledb-contracts/artifacts/contracts/MerkleDB.sol/MerkleDB.json';
 import Web3 from 'web3';
+import MerkleDBArtifact from './artifacts/contracts/MerkleDB.sol/MerkleDB.json';
 import { ETH_PRIVATE_KEY, ETH_RPC, MERKLE_DB_CONTRACT, ORBITDB_ADDRESS } from './environment.js';
 import { initIPFS } from './ipfs.js';
 import { orbitDBtoMerkleDB } from './orbitDBtoMerkleDB.js';

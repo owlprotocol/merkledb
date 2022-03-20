@@ -3,7 +3,6 @@ import OrbitDB from 'orbit-db';
 import cbor from 'cbor';
 import { assert } from 'chai';
 import ganache from 'ganache';
-import MerkleDBArtifact from '@owlprotocol/merkledb-contracts/artifacts/contracts/MerkleDB.sol/MerkleDB.json';
 import Web3 from 'web3';
 import { Contract } from 'web3-eth-contract';
 import { existsSync, rmSync } from 'fs';
@@ -13,6 +12,7 @@ import { testDataToMerkleTree, writeTestDataToDB } from './test/data.js';
 import { snapshotDatabase } from './snapshot.js';
 import { onReplicateDatabase } from './replicate.js';
 import toSortedKeysObject from './utils/toSortedKeysObject.js';
+import MerkleDBArtifact from './artifacts/contracts/MerkleDB.sol/MerkleDB.json';
 
 describe('orbitDBtoMerkleDB.test.ts', () => {
     let web3: Web3;
