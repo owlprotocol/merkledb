@@ -40,11 +40,7 @@ async function test(n: number) {
 
     const randomBytes = crypto.randomBytes(32).toString("hex");
 
-    const update = await merkleDB.updateMerkleDB(
-        "0x" + root,
-        "0x" + randomBytes,
-        "0x" + randomBytes
-    );
+    const update = await merkleDB.updateMerkle("0x" + root, "0x" + randomBytes);
     await update.wait();
     const proofHex = proof.map((e) => "0x" + e.data.toString("hex"));
 
