@@ -19,3 +19,7 @@ https://github.com/orbitdb/orbit-db/blob/main/GUIDE.md#replicating-a-database
 
 ## Bugs
 * Initial IPFS Node has incorrect identity
+  * https://github.com/ipfs/go-ipfs/issues/6262
+
+* Parsing BN in JSON
+  * https://github.com/wbuss/JSONBigNumber
