@@ -5,15 +5,18 @@ import { assert } from 'chai';
 import ganache from 'ganache';
 import Web3 from 'web3';
 import { Contract } from 'web3-eth-contract';
-import { existsSync, readFileSync, rmSync } from 'fs';
+import { existsSync, rmSync } from 'fs';
 
 import sleep from './utils/sleep.js';
 import { testDataToMerkleTree, writeTestDataToDB } from './test/data.js';
 import { snapshotDatabase } from './snapshot.js';
 import { onReplicateDatabase } from './replicate.js';
 import toSortedKeysObject from './utils/toSortedKeysObject.js';
+import { createRequire } from 'module';
 
-const MerkleDBArtifact = JSON.parse(readFileSync('./artifacts/contracts/MerkleDB.sol/MerkleDB.json', 'utf-8'));
+const require = createRequire(import.meta.url);
+// eslint-disable-next-line import/no-commonjs
+const MerkleDBArtifact = require('./artifacts/contracts/MerkleDB.sol/MerkleDB.json');
 
 describe('orbitDBtoMerkleDB.test.ts', () => {
     let web3: Web3;

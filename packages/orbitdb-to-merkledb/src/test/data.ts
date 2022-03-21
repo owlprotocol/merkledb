@@ -1,11 +1,12 @@
 import { MerkleTree } from 'merkletreejs';
 import cbor from 'cbor';
-import { keccak256 } from 'web3-utils';
-import { readFileSync } from 'fs';
+import { keccak256 } from '../es/web3-utils.js';
 import toSortedKeysObject from '../utils/toSortedKeysObject.js';
+import { createRequire } from 'module';
 
-const data = JSON.parse(readFileSync('./data.json', 'utf-8'));
-const people = data.people;
+const require = createRequire(import.meta.url);
+// eslint-disable-next-line import/no-commonjs
+const { people } = require('./data.json');
 
 export async function writeTestDataToDB(db: any) {
     const promises = people.map((p: any) => {
