@@ -1,8 +1,13 @@
 import { MerkleTree } from 'merkletreejs';
 import cbor from 'cbor';
+import * as IPFSClient from 'ipfs-http-client';
 import { keccak256 } from '../es/web3-utils.js';
 import toSortedKeysObject from '../utils/toSortedKeysObject.js';
 import { createRequire } from 'module';
+import esMain from 'es-main';
+import { ETH_PRIVATE_KEY, IPFS_RPC } from '../environment.js';
+import { getOrbitDBIdentity } from '../utils/getOrbitDBIdentity.js';
+import { getOrbitDB } from '../utils/getOrbitDB.js';
 
 const require = createRequire(import.meta.url);
 // eslint-disable-next-line import/no-commonjs
@@ -27,4 +32,18 @@ export function testDataToMerkleTree() {
         sortPairs: true,
     });
     return tree;
+}
+
+if (esMain(import.meta)) {
+    console.debug(IPFS_RPC);
+    const ipfs = IPFSClient.create({ url: IPFS_RPC });
+    // Create OrbitDB identity
+    const identity = await getOrbitDBIdentity(ETH_PRIVATE_KEY);
+    console.debug(identity.toJSON());
+    // Create OrbitDB instance with
+    const orbitdb = await getOrbitDB(ipfs, identity);
+    //const db1 = await orbitdb.docs(ORBITDB_ADDRESS, { indexBy: 'id' });
+    const db1 = await orbitdb.docs('merkledb', { indexBy: 'id' });
+    await writeTestDataToDB(db1);
+    await db1.close();
 }

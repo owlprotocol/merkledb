@@ -10,6 +10,7 @@ export async function getOrbitDBAddress(identity: any) {
     // Create OrbitDB instance
     const orbitdb = await OrbitDB.createInstance(ipfs, { identity });
     const address = orbitdb.determineAddress('merkledb', 'docstore');
+    await orbitdb.disconnect();
 
     return address;
 }

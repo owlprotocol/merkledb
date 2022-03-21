@@ -11,7 +11,6 @@ export async function getEthereumAccount() {
 export default getEthereumAccount;
 
 if (esMain(import.meta)) {
-    getEthereumAccount().then((account) => {
-        console.log(account.privateKey);
-    });
+    const account = await getEthereumAccount();
+    console.log(account.privateKey);
 }
