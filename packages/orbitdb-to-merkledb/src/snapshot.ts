@@ -1,7 +1,7 @@
 import { MerkleTree } from 'merkletreejs';
 import cbor from 'cbor';
-import { keccak256, toHex } from 'web3-utils';
 import { Contract } from 'web3-eth-contract';
+import { keccak256 } from './es/web3-utils.js';
 import toSortedKeysObject from './utils/toSortedKeysObject.js';
 import { SenderParams } from './orbitDBtoMerkleDB.js';
 

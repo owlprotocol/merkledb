@@ -1,10 +1,12 @@
 import OrbitDB from 'orbit-db';
-import { ETH_PRIVATE_KEY } from '../environment.js';
-import { initIPFS } from '../ipfs.js';
-import getOrbitDBIdentity from './getOrbitDBIdentity.js';
+import esMain from 'es-main';
 
-async function getOrbitDBAddress(identity: any) {
-    const ipfs = await initIPFS();
+import { getIpfs } from './getIpfs.js';
+import getOrbitDBIdentity from './getOrbitDBIdentity.js';
+import { ETH_PRIVATE_KEY } from '../environment.js';
+
+export async function getOrbitDBAddress(identity: any) {
+    const ipfs = await getIpfs();
     // Create OrbitDB instance
     const orbitdb = await OrbitDB.createInstance(ipfs, { identity });
     const address = orbitdb.determineAddress('merkledb', 'docstore');
@@ -12,13 +14,11 @@ async function getOrbitDBAddress(identity: any) {
     return address;
 }
 
-if (require.main === module) {
-    getOrbitDBIdentity(ETH_PRIVATE_KEY)
-        .then((id) => {
-            console.log(id.toJSON())
-            return getOrbitDBAddress(id);
-        })
-        .then((address) => {
-            console.log(address);
-        });
+export default getOrbitDBAddress;
+
+if (esMain(import.meta)) {
+    const id = await getOrbitDBIdentity(ETH_PRIVATE_KEY);
+    const address = await getOrbitDBAddress(id);
+    console.log(id.toJSON());
+    console.log(address);
 }

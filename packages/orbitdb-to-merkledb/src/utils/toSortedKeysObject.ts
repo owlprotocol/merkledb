@@ -1,4 +1,4 @@
-import { fromPairs, sortBy, toPairs } from 'lodash';
+import { fromPairs, sortBy, toPairs } from 'lodash-es';
 
 export function toSortedKeysObject(item: any) {
     return fromPairs(sortBy(toPairs(item), 0));

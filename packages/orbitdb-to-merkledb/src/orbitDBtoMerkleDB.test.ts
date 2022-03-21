@@ -5,14 +5,15 @@ import { assert } from 'chai';
 import ganache from 'ganache';
 import Web3 from 'web3';
 import { Contract } from 'web3-eth-contract';
-import { existsSync, rmSync } from 'fs';
+import { existsSync, readFileSync, rmSync } from 'fs';
 
 import sleep from './utils/sleep.js';
 import { testDataToMerkleTree, writeTestDataToDB } from './test/data.js';
 import { snapshotDatabase } from './snapshot.js';
 import { onReplicateDatabase } from './replicate.js';
 import toSortedKeysObject from './utils/toSortedKeysObject.js';
-import MerkleDBArtifact from './artifacts/contracts/MerkleDB.sol/MerkleDB.json';
+
+const MerkleDBArtifact = JSON.parse(readFileSync('./artifacts/contracts/MerkleDB.sol/MerkleDB.json', 'utf-8'));
 
 describe('orbitDBtoMerkleDB.test.ts', () => {
     let web3: Web3;
@@ -29,7 +30,7 @@ describe('orbitDBtoMerkleDB.test.ts', () => {
 
     beforeEach(async () => {
         const provider = ganache.provider({
-            logging: { quiet: true }
+            logging: { quiet: true },
         });
         //@ts-ignore
         web3 = new Web3(provider);

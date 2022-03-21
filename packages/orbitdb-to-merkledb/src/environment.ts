@@ -2,7 +2,8 @@ export const NODE_ENV = process.env.NODE_ENV;
 
 if (NODE_ENV === 'development' || NODE_ENV === undefined) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    require('dotenv').config();
+    const dotenv = await import('dotenv');
+    dotenv.config();
 }
 
 export const IPFS_PRIVATE_KEY = process.env.IPFS_PRIVATE_KEY;
