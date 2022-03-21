@@ -1,0 +1,10 @@
+#https://devcenter.heroku.com/articles/build-docker-images-heroku-yml
+#heroku stack:set container
+#heroku git:remote -a starter-typescript
+setup:
+  config:
+    NAME: "John Doe"
+build:
+  docker:
+    #web: Dockerfile #Open HTTP ports
+    worker: Dockerfile
