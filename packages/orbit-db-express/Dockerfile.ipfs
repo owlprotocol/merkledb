@@ -1,0 +1,3 @@
+# Build
+FROM ipfs/go-ipfs
+CMD ["daemon", "--migrate=true", "--agent-version-suffix=docker"]

@@ -4,6 +4,7 @@ declare global {
             NODE_ENV: 'development' | 'production' | 'test';
             ETH_PRIVATE_KEY: string;
             IPFS_RPC: string;
+            IPFS_BASIC_AUTH?: string;
         }
     }
 }

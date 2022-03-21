@@ -8,4 +8,5 @@ if (NODE_ENV === 'development' || NODE_ENV === undefined) {
 }
 
 export const IPFS_RPC = process.env.IPFS_RPC;
+export const IPFS_BASIC_AUTH = process.env.IPFS_BASIC_AUTH;
 export const ETH_PRIVATE_KEY = process.env.ETH_PRIVATE_KEY;

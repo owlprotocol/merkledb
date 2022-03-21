@@ -2,7 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import { create as createIPFS } from 'ipfs-http-client';
 import { IPFS } from 'ipfs';
-import { ETH_PRIVATE_KEY, IPFS_RPC } from './utils/environment';
+import { ETH_PRIVATE_KEY, IPFS_BASIC_AUTH, IPFS_RPC } from './utils/environment';
 import getOrbitDB from './factory/getOrbitDB';
 import getOrbitDBIdentity from './factory/getOrbitDBIdentity';
 import OrbitDBManager from './DBManager';
@@ -24,7 +24,19 @@ function unpackContents(contents: any) {
 }
 
 export async function getApp() {
-    const ipfs: IPFS = await createIPFS({ url: IPFS_RPC });
+    let ipfs: IPFS;
+    if (IPFS_BASIC_AUTH) {
+        console.debug(IPFS_BASIC_AUTH);
+        const auth = Buffer.from(IPFS_BASIC_AUTH).toString('base64');
+        ipfs = await createIPFS({
+            url: IPFS_RPC,
+            headers: {
+                Authorization: `Basic ${auth}`,
+            },
+        });
+    } else {
+        ipfs = await createIPFS({ url: IPFS_RPC });
+    }
     const identity = await getOrbitDBIdentity(ETH_PRIVATE_KEY);
     const orbitdb = await getOrbitDB(ipfs, identity);
     const dbManager = new OrbitDBManager(orbitdb);
