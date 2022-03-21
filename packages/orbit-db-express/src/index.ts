@@ -1,9 +1,11 @@
-import app from './app';
+import getApp from './getApp';
 
 const port = 3000;
 
 if (typeof require !== 'undefined' && require.main === module) {
-    app.listen(port, () => {
-        console.log(`Example app listening on port ${port}`);
+    getApp().then((app) => {
+        app.listen(port, () => {
+            console.log(`OrbitDB Express Server listening on port ${port}`);
+        });
     });
 }

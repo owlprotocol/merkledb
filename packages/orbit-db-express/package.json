@@ -1,13 +1,13 @@
 {
-  "name": "@leovigna/starter-typescript",
+  "name": "@owlprotocol/orbit-db-express",
   "version": "0.1.5",
   "private": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/leovigna/starter-typescript.git"
+    "url": "https://github.com/owlprotocol/orbit-db-express.git"
   },
-  "homepage": "https://leovigna.github.io/starter-typescript",
-  "copyright": "Copyright 2021 Leo Vigna",
+  "homepage": "https://owlprotocol.github.io/orbit-db-express",
+  "copyright": "Copyright 2021 Owl Protocol",
   "license": "MIT",
   "files": [
     "*",
@@ -31,23 +31,26 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "lint:staged": "lint-staged",
-    "postinstall": "husky install && npm run build",
-    "prepublishOnly": "npm run test"
+    "prepublishOnly": "npm run test",
+    "docker:build": "docker build . -t orbit-db-express",
+    "docker:run": "docker run --network host --env-file .env orbit-db-express"
   },
   "dependencies": {
     "body-parser": "^1.19.2",
     "ethers": "^5.6.1",
     "express": "^4.17.3",
+    "ipfs": "^0.62.1",
     "ipfs-http-client": "^56.0.1",
     "orbit-db": "^0.28.3",
-    "orbit-db-identity-provider": "^0.4.0"
+    "orbit-db-identity-provider": "^0.4.0",
+    "orbit-db-store": "^4.3.3"
   },
   "devDependencies": {
+    "@types/orbit-db": "npm:@leovigna/orbit-db-types@^1.0.2",
     "@types/chai": "^4.3.0",
     "@types/express": "^4.17.13",
     "@types/mocha": "^9.1.0",
     "@types/node": "^16.11.26",
-    "@types/orbit-db": "github:orbitdb/orbit-db-types",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
     "chai": "^4.3.6",
@@ -57,7 +60,6 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-prettier": "^3.4.1",
-    "husky": "^7.0.4",
     "lint-staged": "^11.2.6",
     "mocha": "^9.2.2",
     "npm-run-all": "^4.1.5",

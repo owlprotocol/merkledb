@@ -1,5 +1,5 @@
 # Build
-FROM node:14
+FROM node:16
 ENV NODE_ENV development
 
 RUN npm i --global pnpm
@@ -10,7 +10,7 @@ COPY . .
 RUN npm run build
 
 # Run Image
-FROM node:14-alpine
+FROM node:16-alpine
 WORKDIR /usr/src/app
 ENV NODE_ENV production
 

@@ -1,7 +1,7 @@
 import Identities from 'orbit-db-identity-provider';
 import { ethers } from 'ethers';
 
-import { ETH_PRIVATE_KEY } from './environment';
+import { ETH_PRIVATE_KEY } from '../utils/environment';
 
 export async function getOrbitDBIdentity(ethPrivateKey?: string) {
     let wallet: ethers.Wallet;
