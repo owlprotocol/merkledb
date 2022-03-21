@@ -1,4 +1,4 @@
-import { assert } from "chai";
+import { assert, expect } from "chai";
 import { ethers } from "hardhat";
 import cbor from "cbor";
 import { toHex, padLeft, utf8ToHex, toBN, hexToUtf8, numberToHex } from "web3-utils";
@@ -63,6 +63,17 @@ describe("CBOR Decoding", function () {
         );
     });
 
+    it("Linear Search Decoding", async function () {
+        const decoder = await CBORTestingFactory.deploy();
+
+        const values = cbor.encode({ a: 1, b: 2, c: 3 });
+        // Good call
+        await decoder.testDecodeCBORMappingGetValue(values, toHex("a"));
+        // Bad call
+        const call = decoder.testDecodeCBORMappingGetValue(values, toHex("x"));
+        await expect(call).to.be.revertedWith("Key not found!");
+    });
+
     it("Test with game data", async () => {
         const decoder = await CBORTestingFactory.deploy();
 
@@ -95,7 +106,9 @@ describe("CBOR Decoding", function () {
 
         for (const profile of profiles) {
             const encodedProfile = cbor.encode(profile);
-            const decodedProfile = await decoder.testDecodeCBORMapping(encodedProfile);
+            const decodedProfile = await decoder.testDecodeCBORMapping(
+                encodedProfile
+            );
 
             let iteration = 0;
             for (let [key, value] of Object.entries(profile)) {

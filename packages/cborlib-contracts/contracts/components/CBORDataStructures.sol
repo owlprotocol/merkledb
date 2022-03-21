@@ -24,8 +24,8 @@ library CBORDataStructures {
     function extractMapping(
         bytes memory encoding,
         uint cursor,
-        uint shortCount
-    ) internal view returns (
+        uint8 shortCount
+    ) internal pure returns (
         bytes[2][] memory decodedMapping
     ) {
         // Track our mapping start
@@ -59,12 +59,20 @@ library CBORDataStructures {
 
     }
 
+    /**
+     * @dev Returns the number of items (not pairs) in a data structure.
+     * @param encoding the dynamic bytes array to scan
+     * @param cursor position where mapping starts (in bytes)
+     * @param majorType the corresponding major type identifier
+     * @param shortCount short data identifier included in field info
+     * @return totalItems the number of total items in the data structure
+     */
     function getDataStructureItemLength(
         bytes memory encoding,
         uint cursor,
         CBORUtilities.MajorType majorType,
         uint shortCount
-    ) internal view returns (
+    ) internal pure returns (
         uint256 totalItems
     ) {
         // Track extended count field
