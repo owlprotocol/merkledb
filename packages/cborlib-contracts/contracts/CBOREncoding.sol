@@ -3,7 +3,7 @@ pragma solidity >= 0.4.19 < 0.9.0;
 
 import "@ensdomains/buffer/contracts/Buffer.sol";
 
-library CBOR {
+library CBOREncoding {
     using Buffer for Buffer.buffer;
 
     uint8 private constant MAJOR_TYPE_INT = 0;

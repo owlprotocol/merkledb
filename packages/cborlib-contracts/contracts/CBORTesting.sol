@@ -5,7 +5,7 @@ import "hardhat/console.sol";
 
 import "@ensdomains/buffer/contracts/Buffer.sol";
 
-import "./CBOR.sol";
+import "./CBOREncoding.sol";
 import "./CBORDecoding.sol";
 
 /**
@@ -21,8 +21,8 @@ contract CBORTesting {
         Buffer.buffer memory buf;
         buf.init(64);
 
-        uint256 myval = 100;
-        CBOR.encodeUInt(buf, myval);
+        uint256 myval = 1809251394333065553493296640760748560207343510400633813116524750123642650624;
+        CBOREncoding.encodeBigNum(buf, myval);
 
         // CBOR.encodeString(buf, "some string that's longer than 24 characters!");
 
@@ -35,7 +35,7 @@ contract CBORTesting {
         return buf.buf;
     }
 
-    function decodeBytes(bytes memory encoding) public view returns (CBORDecoding.CBORData[] memory) {
+    function decodeBytes(bytes memory encoding) public view returns (bytes[2][] memory decodedData) {
         return CBORDecoding.decodeCBOR(encoding);
     }
 
