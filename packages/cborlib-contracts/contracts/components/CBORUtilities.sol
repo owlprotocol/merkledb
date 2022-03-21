@@ -52,7 +52,6 @@ library CBORUtilities {
     ) {
         // Parse field encoding
         (majorType, shortCount) = parseFieldEncoding(encoding[cursor]);
-        console.log("Got sc: %s", shortCount);
 
         // Switch case on data type
 
@@ -104,16 +103,13 @@ library CBORUtilities {
     ) internal view returns (
         bytes memory value
     ) {
-
-        console.log("Processing major: %s (s: %s | e: %s)", uint8(majorType), start, end);
-
         if (start != end) {
             // If we have a payload/count, slice it and short-circuit
             value = ByteUtils.sliceBytesMemory(encoding, start, end);
             return value;
         }
 
-        if (majorType == MajorType.Special)
+        if (majorType == MajorType.Special) {
             // Special means data is encoded INSIDE field
             if (shortCount == 21)
                 // True
@@ -128,6 +124,8 @@ library CBORUtilities {
                 value = abi.encodePacked(UINT_FALSE);
 
             return value;
+
+        }
 
         // Data IS the shortCount (<24)
         value = abi.encodePacked(shortCount);

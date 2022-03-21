@@ -35,8 +35,12 @@ contract CBORTesting {
         return buf.buf;
     }
 
-    function decodeBytes(bytes memory encoding) public view returns (bytes[2][] memory decodedData) {
-        return CBORDecoding.decodeCBOR(encoding);
+    function testDecodeCBORMapping(bytes memory encoding) public view returns (bytes[2][] memory decodedData) {
+        return CBORDecoding.decodeCBORMapping(encoding);
+    }
+
+    function testDecodeCBORPrimitive(bytes memory encoding) public view returns (bytes[] memory decodedData) {
+        return CBORDecoding.decodeCBORPrimitive(encoding);
     }
 
 

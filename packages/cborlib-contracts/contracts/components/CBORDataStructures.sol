@@ -49,7 +49,6 @@ library CBORDataStructures {
             (CBORUtilities.MajorType majorType, uint8 shortCount, uint start, uint end, uint next) = CBORUtilities.parseField(encoding, mappingCursor);
 
             // Save our data
-            console.log("Accessed: [%s][%s]", arrayIdx, pair);
             decodedMapping[pair][arrayIdx] = CBORUtilities.extractValue(encoding, majorType, shortCount, start, end);
 
             // Update our cursor

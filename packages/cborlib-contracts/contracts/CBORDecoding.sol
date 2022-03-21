@@ -15,13 +15,13 @@ import "./components/ByteUtils.sol";
 library CBORDecoding {
 
     /**
-     * @dev Parses an encoded CBOR dynamic bytes array into it's array of data
+     * @dev Parses an encoded CBOR Mapping into a 2d array of data
      * @param encoding Encoded CBOR bytes data
      * @return decodedData Decoded CBOR data (returned in structs).
      * Interpretting this bytes data from bytes to it's proper object is up
      * to the implementer.
      */
-    function decodeCBOR(
+    function decodeCBORMapping(
         bytes memory encoding
     ) public view returns(
         bytes[2][] memory decodedData
@@ -35,5 +35,44 @@ library CBORDecoding {
 
         return decodedData;
     }
+
+    /**
+     * @dev Parses an encoded CBOR dynamic bytes array into it's array of data
+     * @param encoding Encoded CBOR bytes data
+     * @return decodedData Decoded CBOR data (returned in structs).
+     * Interpretting this bytes data from bytes to it's proper object is up
+     * to the implementer.
+     */
+    function decodeCBORPrimitive(
+        bytes memory encoding
+    ) public view returns(
+        bytes[] memory decodedData
+    ) {
+        // Setup cursor
+        uint cursor = 0;
+
+        // Count how many items we have
+        uint totalItems = CBORUtilities.scanIndefiniteItems(encoding, cursor);
+
+        // Allocate array
+        decodedData = new bytes[](totalItems);
+
+        // Push to Array
+        for (uint idx = 0; cursor < decodedData.length; idx++) {
+
+            // See what our field looks like
+            (CBORUtilities.MajorType majorType, uint8 shortCount, uint start, uint end, uint next) = CBORUtilities.parseField(encoding, cursor);
+
+            // Save our data
+            decodedData[idx] = CBORUtilities.extractValue(encoding, majorType, shortCount, start, end);
+
+            // Update our cursor
+            cursor = next;
+
+        }
+
+        return decodedData;
+    }
+
 
 }
