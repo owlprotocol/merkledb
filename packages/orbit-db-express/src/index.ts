@@ -1,14 +1,9 @@
-import { NAME } from './utils/environment';
-import hello from './hello';
-import sleep from './utils/sleep';
+import app from './app';
 
-async function main() {
-    while (true) {
-        await sleep(1000);
-        console.log(`${Date.now()} ${hello(NAME)}`);
-    }
-}
+const port = 3000;
 
 if (typeof require !== 'undefined' && require.main === module) {
-    main();
+    app.listen(port, () => {
+        console.log(`Example app listening on port ${port}`);
+    });
 }
