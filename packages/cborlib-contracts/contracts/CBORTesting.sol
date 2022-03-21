@@ -16,30 +16,15 @@ contract CBORTesting {
 
     using Buffer for Buffer.buffer;
 
-
-    function createEncoding() public view returns (bytes memory) {
-        Buffer.buffer memory buf;
-        buf.init(64);
-
-        uint256 myval = 1809251394333065553493296640760748560207343510400633813116524750123642650624;
-        CBOREncoding.encodeBigNum(buf, myval);
-
-        // CBOR.encodeString(buf, "some string that's longer than 24 characters!");
-
-        // buf.encode
-
-        // CBOR.encodeUInt(buf, myval);
-
-        console.log("encoded data: %s", myval);
-
-        return buf.buf;
-    }
-
-    function testDecodeCBORMapping(bytes memory encoding) public view returns (bytes[2][] memory decodedData) {
+    function testDecodeCBORMapping(bytes memory encoding) public pure returns (bytes[2][] memory decodedData) {
         return CBORDecoding.decodeCBORMapping(encoding);
     }
 
-    function testDecodeCBORPrimitive(bytes memory encoding) public view returns (bytes[] memory decodedData) {
+    function testDecodeCBORMappingGetValue(bytes memory encoding, bytes memory key) public pure returns (bytes memory value) {
+        return CBORDecoding.decodeCBORMappingGetValue(encoding, key);
+    }
+
+    function testDecodeCBORPrimitive(bytes memory encoding) public pure returns (bytes[] memory decodedData) {
         return CBORDecoding.decodeCBORPrimitive(encoding);
     }
 

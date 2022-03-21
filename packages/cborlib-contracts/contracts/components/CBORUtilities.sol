@@ -43,7 +43,7 @@ library CBORUtilities {
     function parseField(
         bytes memory encoding,
         uint cursor
-    ) internal view returns (
+    ) internal pure returns (
         MajorType majorType,
         uint8 shortCount,
         uint start,
@@ -58,7 +58,7 @@ library CBORUtilities {
         // Integers (Major Types: 0,1)
         if (majorType == MajorType.UnsignedInteger ||
             majorType == MajorType.NegativeInteger)
-            (start, end) = CBORPrimitives.parseInteger(encoding, cursor, shortCount);
+            (start, end) = CBORPrimitives.parseInteger(cursor, shortCount);
 
         // Strings (Major Types: 2,3)
         else if (majorType == MajorType.ByteString ||
@@ -71,7 +71,7 @@ library CBORUtilities {
 
         // Special / Floats (Major Type: 7)
         else if (majorType == MajorType.Special)
-            (start, end) = CBORPrimitives.parseSpecial(encoding, cursor, shortCount);
+            (start, end) = CBORPrimitives.parseSpecial(cursor, shortCount);
 
         // Unsupported types
         else
@@ -100,7 +100,7 @@ library CBORUtilities {
         uint8 shortCount,
         uint start,
         uint end
-    ) internal view returns (
+    ) internal pure returns (
         bytes memory value
     ) {
         if (start != end) {
@@ -152,10 +152,16 @@ library CBORUtilities {
         shortCount = data & SHORTCOUNT_BITMASK;
     }
 
+    /**
+     * @dev Counts encoded items until a BREAK or the end of the bytes
+     * @param encoding the encoded bytes array
+     * @param cursor where to start scanning
+     * @return totalItems total items found in encoding
+     */
     function scanIndefiniteItems(
         bytes memory encoding,
         uint cursor
-    ) internal view returns (
+    ) internal pure returns (
         uint totalItems
     ) {
         // Loop through our indefinite-length number until break marker

@@ -19,17 +19,16 @@ library CBORPrimitives {
 
     /**
      * @dev Parses a CBOR-encoded integer and determines where data start/ends.
-     * @param encoding the dynamic bytes array to scan
      * @param cursor position where integer starts (in bytes)
      * @param shortCount short data identifier included in field info
      * @return dataStart byte position where data starts
      * @return dataEnd byte position where data ends
      */
     function parseInteger(
-        bytes memory encoding,
+        /*bytes memory encoding,*/
         uint cursor,
         uint shortCount
-    ) internal view returns (
+    ) internal pure returns (
         uint dataStart,
         uint dataEnd
     ) {
@@ -69,7 +68,7 @@ library CBORPrimitives {
         bytes memory encoding,
         uint cursor,
         uint shortCount
-    ) internal view returns (
+    ) internal pure returns (
         uint dataStart,
         uint dataEnd
     ) {
@@ -128,7 +127,7 @@ library CBORPrimitives {
         bytes memory encoding,
         uint cursor,
         uint shortCount
-    ) internal view returns (
+    ) internal pure returns (
         uint dataStart,
         uint dataEnd
     ) {
@@ -138,7 +137,7 @@ library CBORPrimitives {
             // String-encoded bignum will start at next byte
             cursor++;
             // Forward request to parseString (bignums are string-encoded)
-            (, uint8 shortCount) = CBORUtilities.parseFieldEncoding(encoding[cursor]);
+            (, shortCount) = CBORUtilities.parseFieldEncoding(encoding[cursor]);
             (dataStart, dataEnd) = parseString(encoding, cursor, shortCount);
         }
 
@@ -150,17 +149,16 @@ library CBORPrimitives {
 
     /**
      * @dev Parses a CBOR-encoded special type.
-     * @param encoding the dynamic bytes array to scan
      * @param cursor position where integer starts (in bytes)
      * @param shortCount short data identifier included in field info
      * @return dataStart byte position where data starts
      * @return dataEnd byte position where data ends
      */
     function parseSpecial(
-        bytes memory encoding,
+        /*bytes memory encoding,*/
         uint cursor,
         uint shortCount
-    ) internal view returns (
+    ) internal pure returns (
         uint dataStart,
         uint dataEnd
     ) {
