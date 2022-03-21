@@ -20,7 +20,7 @@ specifiers:
   ipfs: ^0.62.1
   lodash: ^4.17.21
   merkletreejs: ^0.2.31
-  mocha: ^9.0.3
+  mocha: ^9.2.2
   orbit-db: ^0.28.3
   orbit-db-identity-provider: ^0.4.0
   prettier: ^2.6.0

@@ -23,4 +23,6 @@ async function main() {
     orbitDBtoMerkleDB(db1, contract, { from, nonce });
 }
 
-main();
+if (require.main === module) {
+    main();
+}

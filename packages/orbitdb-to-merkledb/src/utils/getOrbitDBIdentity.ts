@@ -1,5 +1,6 @@
 import Identities from 'orbit-db-identity-provider';
 import { ethers } from 'ethers';
+import { ETH_PRIVATE_KEY } from '../environment.js';
 
 export async function getOrbitDBIdentity(ethPrivateKey?: string) {
     let wallet: ethers.Wallet;
@@ -16,7 +17,8 @@ export async function getOrbitDBIdentity(ethPrivateKey?: string) {
 export default getOrbitDBIdentity;
 
 if (require.main === module) {
-    getOrbitDBIdentity('0x03b697e56018648c9284827507ed15b2ae8564d1f1357f18e320d260955bf19e').then((id) => {
-        console.log(JSON.stringify(id.toJSON()));
+    console.debug(ETH_PRIVATE_KEY)
+    getOrbitDBIdentity(ETH_PRIVATE_KEY).then((id) => {
+        console.log(id.toJSON());
     });
 }

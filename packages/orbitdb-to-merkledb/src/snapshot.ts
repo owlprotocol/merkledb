@@ -26,8 +26,7 @@ export async function snapshotDatabase(db: any, merkleDB: Contract, senderOption
     const nonce = senderOptions.nonce;
     const merkleRoot = '0x' + tree.getRoot().toString('hex');
     const merkleTreeIPFS = '0x';
-    const databaseIPFS = '0x';
-    const tx = merkleDB.methods.updateMerkleDB(merkleRoot, merkleTreeIPFS, databaseIPFS);
+    const tx = merkleDB.methods.updateMerkle(merkleRoot, merkleTreeIPFS);
     tx.send({
         nonce,
         from,

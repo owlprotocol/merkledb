@@ -85,7 +85,6 @@ importers:
 
   packages/orbitdb-to-merkledb:
     specifiers:
-      '@owlprotocol/merkledb-contracts': ../merkledb-contracts
       '@types/chai': ^4.2.21
       '@types/lodash': ^4.14.180
       '@types/mocha': ^9.1.0
@@ -112,7 +111,6 @@ importers:
       web3-eth-contract: ^1.7.1
       web3-utils: ^1.7.1
     dependencies:
-      '@owlprotocol/merkledb-contracts': link:../merkledb-contracts
       cbor: 8.1.0
       ipfs: 0.62.1
       lodash: 4.17.21
@@ -8301,6 +8299,7 @@ packages:
       chalk: 2.4.2
       diff-match-patch: 1.0.5
     dev: false
+    bundledDependencies: []
 
   /jsonfile/2.4.0:
     resolution: {integrity: sha1-NzaitCi4e72gzIO1P6PWM6NcKug=}

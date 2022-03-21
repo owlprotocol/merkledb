@@ -44,7 +44,7 @@ describe('orbitDBtoMerkleDB.test.ts', () => {
             .send({
                 nonce: nonce++,
                 from,
-                gas: 1000000,
+                gas: 2000000,
             });
 
         console.debug(`MerkleDB deployed at ${merkleDB.options.address}`);

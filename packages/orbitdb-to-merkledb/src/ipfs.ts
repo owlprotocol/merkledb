@@ -1,5 +1,5 @@
 import * as IPFS from 'ipfs';
-import { PRIV_KEY, PEER_ID } from './environment.js';
+import { IPFS_PRIVATE_KEY, IPFS_PEER_ID } from './environment.js';
 
 export const initIPFS = async () => {
     // Create IPFS instance
@@ -20,8 +20,8 @@ export const initIPFS = async () => {
                 ],
             },
             Identity: {
-                PeerID: PEER_ID,
-                PrivKey: PRIV_KEY,
+                PeerID: IPFS_PEER_ID,
+                PrivKey: IPFS_PRIVATE_KEY,
             },
         },
         EXPERIMENTAL: {
