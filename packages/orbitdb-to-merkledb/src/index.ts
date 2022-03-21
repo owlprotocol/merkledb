@@ -1,19 +1,27 @@
-import OrbitDB from 'orbit-db';
-import MerkleDBArtifact from '@owlprotocol/merkledb-contracts/artifacts/contracts/MerkleDB.sol/MerkleDB.json';
 import Web3 from 'web3';
-import { ETH_PRIVATE_KEY, ETH_RPC, MERKLE_DB_CONTRACT, ORBITDB_ADDRESS } from './environment.js';
-import { initIPFS } from './ipfs.js';
+import esMain from 'es-main';
+import * as IpfsClient from 'ipfs-http-client';
+import { createRequire } from 'module';
+import { ETH_PRIVATE_KEY, ETH_RPC, IPFS_RPC, MERKLE_DB_CONTRACT, ORBITDB_ADDRESS } from './environment.js';
 import { orbitDBtoMerkleDB } from './orbitDBtoMerkleDB.js';
+import { getOrbitDBIdentity } from './utils/getOrbitDBIdentity.js';
+import { getOrbitDB } from './utils/getOrbitDB.js';
 
+const require = createRequire(import.meta.url);
+// eslint-disable-next-line import/no-commonjs
+const MerkleDBArtifact = require('./artifacts/contracts/MerkleDB.sol/MerkleDB.json');
 
 async function main() {
     const web3 = new Web3(ETH_RPC);
     //TODO: Add Private Key
     const contract = new web3.eth.Contract(MerkleDBArtifact.abi as any, MERKLE_DB_CONTRACT);
 
-    const ipfs = await initIPFS();
-    // Create OrbitDB instance
-    const orbitdb = await OrbitDB.createInstance(ipfs);
+    const ipfs = IpfsClient.create({ url: IPFS_RPC });
+    // Create OrbitDB identity
+    const identity = await getOrbitDBIdentity(ETH_PRIVATE_KEY);
+    console.debug(identity.toJSON());
+    // Create OrbitDB instance with
+    const orbitdb = await getOrbitDB(ipfs, identity);
     //https://github.com/orbitdb/orbit-db/blob/main/GUIDE.md#persistency
     const db1 = await orbitdb.docs(ORBITDB_ADDRESS, { indexBy: 'id' });
 
@@ -23,4 +31,6 @@ async function main() {
     orbitDBtoMerkleDB(db1, contract, { from, nonce });
 }
 
-main();
+if (esMain(import.meta)) {
+    await main();
+}

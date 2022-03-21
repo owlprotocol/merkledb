@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "node",
+    "target": "esnext",
     "sourceMap": true,
     "outDir": "lib",
     "strict": true,
@@ -7,8 +10,8 @@
       "esnext",
       "dom"
     ],
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
+    "esModuleInterop": false,
+    "resolveJsonModule": false,
     "declaration": true,
     "skipLibCheck": true
   }

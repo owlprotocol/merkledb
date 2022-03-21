@@ -22,8 +22,8 @@ async function main() {
     };
     const ipfs2 = await IPFS.create(ipfs2_config);
 
-    const peers1 = (await ipfs1.swarm.peers()).map((p: any) => p.addr.toString());;
-    const peers2 = (await ipfs2.swarm.peers()).map((p: any) => p.addr.toString());;
+    const peers1 = (await ipfs1.swarm.peers()).map((p: any) => p.addr.toString());
+    const peers2 = (await ipfs2.swarm.peers()).map((p: any) => p.addr.toString());
     console.debug({ peers1, peers2 });
 
     // Open the first database for the second peer,

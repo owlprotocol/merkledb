@@ -3,7 +3,6 @@ import OrbitDB from 'orbit-db';
 import cbor from 'cbor';
 import { assert } from 'chai';
 import ganache from 'ganache';
-import MerkleDBArtifact from '@owlprotocol/merkledb-contracts/artifacts/contracts/MerkleDB.sol/MerkleDB.json';
 import Web3 from 'web3';
 import { Contract } from 'web3-eth-contract';
 import { existsSync, rmSync } from 'fs';
@@ -13,6 +12,11 @@ import { testDataToMerkleTree, writeTestDataToDB } from './test/data.js';
 import { snapshotDatabase } from './snapshot.js';
 import { onReplicateDatabase } from './replicate.js';
 import toSortedKeysObject from './utils/toSortedKeysObject.js';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+// eslint-disable-next-line import/no-commonjs
+const MerkleDBArtifact = require('./artifacts/contracts/MerkleDB.sol/MerkleDB.json');
 
 describe('orbitDBtoMerkleDB.test.ts', () => {
     let web3: Web3;
@@ -29,7 +33,7 @@ describe('orbitDBtoMerkleDB.test.ts', () => {
 
     beforeEach(async () => {
         const provider = ganache.provider({
-            logging: { quiet: true }
+            logging: { quiet: true },
         });
         //@ts-ignore
         web3 = new Web3(provider);
@@ -44,7 +48,7 @@ describe('orbitDBtoMerkleDB.test.ts', () => {
             .send({
                 nonce: nonce++,
                 from,
-                gas: 1000000,
+                gas: 2000000,
             });
 
         console.debug(`MerkleDB deployed at ${merkleDB.options.address}`);
