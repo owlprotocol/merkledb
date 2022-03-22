@@ -21,6 +21,8 @@ yarn.lock
 # misc
 .DS_Store
 .env
+.env.*
+!.env.local
 .vscode
 
 npm-debug.log*
