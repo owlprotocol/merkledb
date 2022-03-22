@@ -11,7 +11,7 @@ RUN npm run build
 
 # Run Image
 FROM node:16-alpine
-WORKDIR /usr/src/app
+WORKDIR /app
 ENV NODE_ENV production
 
 RUN npm i --global pnpm
