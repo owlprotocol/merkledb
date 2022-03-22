@@ -1,31 +1,48 @@
 module.exports = {
-  root: true,
   env: {
-    es6: true,
     node: true,
   },
+  parser: '@typescript-eslint/parser', // Specifies the ESLint parser
   extends: [
-    "eslint:recommended",
-    "plugin:import/errors",
-    "plugin:import/warnings",
-    "plugin:import/typescript",
-    "google",
-    "plugin:@typescript-eslint/recommended",
+    'plugin:@typescript-eslint/recommended', // Uses the recommended rules from @typescript-eslint/eslint-plugin
+    'plugin:prettier/recommended',
+    'plugin:import/recommended',
+    'plugin:import/typescript',
   ],
-  parser: "@typescript-eslint/parser",
+  plugins: ['@typescript-eslint', 'prettier', 'import'],
   parserOptions: {
-    project: ["tsconfig.json", "tsconfig.dev.json"],
-    sourceType: "module",
+    ecmaVersion: 2018, // Allows for the parsing of modern ECMAScript features
+    sourceType: 'module', // Allows for the use of imports
+    ecmaFeatures: {},
   },
-  ignorePatterns: [
-    "/lib/**/*", // Ignore built files.
-  ],
-  plugins: [
-    "@typescript-eslint",
-    "import",
-  ],
   rules: {
-    "quotes": ["error", "double"],
-    "import/no-unresolved": 0,
+    semi: 0,
+    'linebreak-style': ['error', 'unix'],
+    quotes: ['error', 'single'],
+    'no-console': 'warn',
+    'no-unused-vars': 'off',
+    'no-empty': 'warn',
+    'import/no-named-as-default': 'off',
+    'import/no-anonymous-default-export': 'off',
+    'import/no-cycle': 'error',
+    'import/no-self-import': 'error',
+    'import/no-anonymous-default-export': 'off',
+    // '@typescript-eslint/no-unused-vars': ['error', { vars: 'all', args: 'after-used', ignoreRestSiblings: false }],
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/ban-ts-comment': 'off',
   },
+  settings: {
+    'import/resolver': {
+      node: {
+        extensions: ['.js', '.ts'],
+      },
+    },
+  },
+  overrides: [
+    {
+      files: ['**/*.ts'],
+    },
+  ],
 };
