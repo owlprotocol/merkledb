@@ -1,4 +1,7 @@
 import getApp from './getApp';
+import { EventEmitter } from 'events';
+
+EventEmitter.defaultMaxListeners = 100;
 
 const port = 3000;
 

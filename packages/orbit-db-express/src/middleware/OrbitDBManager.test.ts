@@ -1,22 +1,22 @@
 import { create as createIPFS, IPFS } from 'ipfs';
 import { existsSync, rmSync } from 'fs';
-import DBManager from './DBManager';
-import { ETH_PRIVATE_KEY } from './utils/environment';
-import getOrbitDB from './factory/getOrbitDB';
-import getOrbitDBIdentity from './factory/getOrbitDBIdentity';
+import OrbitDBManager from './OrbitDBManager';
+import { ETH_PRIVATE_KEY } from '../utils/environment';
+import getOrbitDB from '../factory/getOrbitDB';
+import getOrbitDBIdentity from '../factory/getOrbitDBIdentity';
 import OrbitDB from 'orbit-db';
 import { assert } from 'chai';
 
-describe('DBManager.test.ts', () => {
+describe('OrbitDBManager.test.ts', () => {
     let ipfs: IPFS;
     let orbitdb: OrbitDB;
-    let dbManager: DBManager;
+    let dbManager: OrbitDBManager;
 
     beforeEach(async () => {
         ipfs = await createIPFS();
         const identity = await getOrbitDBIdentity(ETH_PRIVATE_KEY);
         orbitdb = await getOrbitDB(ipfs, identity);
-        dbManager = new DBManager(orbitdb);
+        dbManager = new OrbitDBManager(orbitdb);
     });
 
     it('dbList', () => {
