@@ -1,9 +1,5 @@
-import { MerkleTree } from 'merkletreejs';
-import cbor from 'cbor';
-import { keccak256 } from 'web3-utils';
-import toSortedKeysObject from '../utils/toSortedKeysObject';
-
 import { people } from './data.json';
+import toMerkleTree from '../utils/toMerkleTree';
 
 export async function writeTestDataToDB(db: any) {
     const promises = people.map((p: any) => {
@@ -14,14 +10,5 @@ export async function writeTestDataToDB(db: any) {
 }
 
 export function testDataToMerkleTree() {
-    const rows = people;
-    const rowsCBOR = rows.map((r: any) => cbor.encode(toSortedKeysObject(r)));
-    //console.debug('Creating test Merkle Tree');
-    //console.debug({ rows, rowsCBOR: rowsCBOR.map((r) => r.toString('hex')) });
-
-    const tree = new MerkleTree(rowsCBOR, keccak256, {
-        hashLeaves: true,
-        sortPairs: true,
-    });
-    return tree;
+    return toMerkleTree(people);
 }

@@ -5,14 +5,7 @@ import cbor from 'cbor';
 import { keccak256 } from 'web3-utils';
 import toSortedKeysObject from '../utils/toSortedKeysObject';
 import { assert } from 'chai';
-
-async function iterToBuffer(x: AsyncIterable<Uint8Array>) {
-    const buffers = [];
-    for await (const b of x) {
-        buffers.push(b);
-    }
-    return Buffer.concat(buffers);
-}
+import iterToBuffer from '../utils/iterToBuffer';
 
 describe('merktreejs.test.ts', () => {
     let ipfs: IPFS;

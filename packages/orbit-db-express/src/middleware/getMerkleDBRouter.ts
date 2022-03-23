@@ -34,8 +34,8 @@ export async function getMerkleDBRouter(merkleDBManager: MerkleDBManager) {
     router.post('/snapshot/:dbname', async (req, res) => {
         const { dbname } = req.params;
         const { address } = req.body;
-        const { merkleRoot, hash } = await merkleDBManager.snapshot(dbname, address);
-        res.send({ merkleRoot, hash });
+        const { merkleRoot, txHash } = await merkleDBManager.snapshot(dbname, address);
+        res.send({ merkleRoot, txHash });
     });
 
     router.get('/contract/:address', async (req, res) => {

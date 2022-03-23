@@ -5,11 +5,14 @@ import ganache from 'ganache';
 import Web3 from 'web3';
 import { Contract } from 'web3-eth-contract';
 import { existsSync, rmSync } from 'fs';
+import cbor from 'cbor';
+import { people } from '../test/data.json';
 
 import sleep from '../utils/sleep';
 import { testDataToMerkleTree, writeTestDataToDB } from '../test/data';
 import { snapshotOrbitDB } from './MerkleDBManager';
 import MerkleDBArtifact from '../artifacts/contracts/MerkleDB.sol/MerkleDB.json';
+import iterToBuffer from '../utils/iterToBuffer';
 
 describe('MerkleDBManager.test.ts', () => {
     let web3: Web3;
@@ -61,6 +64,7 @@ describe('MerkleDBManager.test.ts', () => {
         db1 = await orbitdb1.docs('docs', { indexBy: 'id' });
         await writeTestDataToDB(db1);
 
+        /*
         const ipfs2_config = {
             repo: './ipfs2',
             config: {
@@ -78,23 +82,33 @@ describe('MerkleDBManager.test.ts', () => {
         db2 = await orbitdb2.docs(db1.address.toString());
         await db2.load();
         await sleep(1000);
+        */
     });
 
     it('snapshot', async () => {
-        const { tree } = await snapshotOrbitDB(db2, ipfs1, merkleDB, { from, nonce });
-        const treeExpected = testDataToMerkleTree();
-        const root1 = '0x' + tree.getRoot().toString('hex');
+        const { merkleRoot, merkleTreeIPFS } = await snapshotOrbitDB(db1, ipfs1, merkleDB, { from, nonce });
+        const { tree: treeExpected } = testDataToMerkleTree();
         const rootExpected1 = '0x' + treeExpected.getRoot().toString('hex');
 
         //console.debug(tree.toString());
         //console.debug(treeExpected.toString());
-        assert.equal(root1, rootExpected1, 'Invalid Root!');
+        assert.equal(merkleRoot, rootExpected1, 'Invalid Root!');
 
         //Check contract values
-        await sleep(1000);
+        await sleep(3000);
         const rootContract1 = await merkleDB.methods.merkleRoot().call();
         //console.debug(rootContract1);
         assert.equal(rootContract1, rootExpected1, 'Invalid Contract Root!');
+
+        const result = await ipfs1.cat(merkleTreeIPFS);
+        const buffer = await iterToBuffer(result);
+        const bufferStr = buffer.toString('utf-8');
+        const data = JSON.parse(bufferStr);
+        const dataDecoded = data.map((d: string) => cbor.decode(Buffer.from(d, 'hex')));
+        console.debug(data);
+        console.debug(dataDecoded);
+
+        assert.deepEqual(dataDecoded, people);
 
         //On replicate listener
         /*
@@ -151,10 +165,10 @@ describe('MerkleDBManager.test.ts', () => {
 
     afterEach(async () => {
         await db1.close();
-        await db2.close();
+        //await db2.close();
         await orbitdb1.disconnect();
-        await orbitdb2.disconnect();
-        await ipfs2.stop();
+        //await orbitdb2.disconnect();
+        //await ipfs2.stop();
         await ipfs1.stop();
 
         ['./ipfs1', './ipfs2', './orbitdb1', './orbitdb2'].map((p) => {
