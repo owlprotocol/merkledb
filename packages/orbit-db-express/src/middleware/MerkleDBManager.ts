@@ -39,21 +39,23 @@ export function snapshotOrbitDB(db: any, ipfs: IPFS, merkleDB: Contract, senderO
         tx.send({
             nonce,
             from,
-            gas: 100000,
+            gas: 200000,
             gasPrice: '150000000000',
-        }).on('transactionHash', (hash: string) => {
-            console.debug({
-                message: 'Snapshot MerkleDB contract',
-                orbitDBAddress: db.address,
-                merkleDBAddress: merkleDB.options.address,
-                merkleTree: tree.toString(),
-                merkleTreeLeaves: rows,
-                merkleRoot: tree.getRoot().toString('hex'),
-                hash,
-            });
-            resolve({ tree, hash });
-        });
-    }) as Promise<{ tree: any; hash: string }>;
+        })
+            .on('transactionHash', (hash: string) => {
+                console.debug({
+                    message: 'Snapshot MerkleDB contract',
+                    orbitDBAddress: db.address,
+                    merkleDBAddress: merkleDB.options.address,
+                    merkleTree: tree.toString(),
+                    merkleTreeLeaves: rows,
+                    merkleRoot,
+                    hash,
+                });
+                resolve({ tree, merkleRoot, hash });
+            })
+            .on('error', (error: any) => console.error(error));
+    }) as Promise<{ tree: any; merkleRoot: string; hash: string }>;
 }
 
 /**
@@ -132,25 +134,15 @@ export class MerkleDBManager {
             //const value = entry.payload.value;
             //const { hash } = await onUpdate(value, { from, nonce: this.nonce++ });
             snapshotOrbitDB(db, this.ipfs, contract, { from, nonce: this.nonce++ });
-            /*
-            console.debug({
-                message: 'Updating MerkleDB contract',
-                orbitDBAddress: db.address,
-                merkleDBAddress,
-                merkleTree: tree.toString(),
-                merkleRoot: tree.getRoot().toString('hex'),
-                hash,
-            });
-            */
         };
         db.events.on('write', listener);
         this.orbitDBListeners[orbitDBAddress] = listener;
 
         //Initial snapshot
-        const { tree, hash } = await snapshotOrbitDB(db, this.ipfs, contract, { from, nonce: this.nonce++ });
+        const { merkleRoot, hash } = await snapshotOrbitDB(db, this.ipfs, contract, { from, nonce: this.nonce++ });
         //this.merkleDBTrees[orbitDBAddress] = tree;
 
-        return { root: tree.getRoot().toString('hex'), hash };
+        return { merkleRoot, hash };
     }
 
     unsubscribe(orbitDBAddress: string) {
@@ -168,10 +160,10 @@ export class MerkleDBManager {
         const db = await this.orbitDBManager.get(orbitDBAddress, { type: 'docstore', create: true });
         const contract = this.getMerkleDBContract(merkleDBAddress);
 
-        const { tree, hash } = await snapshotOrbitDB(db, this.ipfs, contract, { from, nonce: this.nonce++ });
+        const { merkleRoot, hash } = await snapshotOrbitDB(db, this.ipfs, contract, { from, nonce: this.nonce++ });
         //this.merkleDBTrees[orbitDBAddress] = tree;
 
-        return { root: tree.getRoot().toString('hex'), hash };
+        return { merkleRoot, hash };
     }
 
     getMerkleDBContract(address: string) {

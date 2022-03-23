@@ -8,9 +8,9 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "bytes32",
+          "internalType": "string",
           "name": "databaseIPFS",
-          "type": "bytes32"
+          "type": "string"
         }
       ],
       "name": "DatabaseUpdate",
@@ -27,9 +27,9 @@
         },
         {
           "indexed": false,
-          "internalType": "bytes32",
+          "internalType": "string",
           "name": "merkleTreeIPFS",
-          "type": "bytes32"
+          "type": "string"
         }
       ],
       "name": "MerkleUpdate",
@@ -62,9 +62,9 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
+          "internalType": "string",
           "name": "_databaseIPFS",
-          "type": "bytes32"
+          "type": "string"
         }
       ],
       "name": "updateDB",
@@ -80,9 +80,9 @@
           "type": "bytes32"
         },
         {
-          "internalType": "bytes32",
+          "internalType": "string",
           "name": "_merkleTreeIPFS",
-          "type": "bytes32"
+          "type": "string"
         }
       ],
       "name": "updateMerkle",
