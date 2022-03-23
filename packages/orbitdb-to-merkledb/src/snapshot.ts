@@ -1,7 +1,7 @@
 import { MerkleTree } from 'merkletreejs';
 import cbor from 'cbor';
-import { keccak256, toHex } from 'web3-utils';
 import { Contract } from 'web3-eth-contract';
+import { keccak256 } from './es/web3-utils.js';
 import toSortedKeysObject from './utils/toSortedKeysObject.js';
 import { SenderParams } from './orbitDBtoMerkleDB.js';
 
@@ -26,8 +26,7 @@ export async function snapshotDatabase(db: any, merkleDB: Contract, senderOption
     const nonce = senderOptions.nonce;
     const merkleRoot = '0x' + tree.getRoot().toString('hex');
     const merkleTreeIPFS = '0x';
-    const databaseIPFS = '0x';
-    const tx = merkleDB.methods.updateMerkleDB(merkleRoot, merkleTreeIPFS, databaseIPFS);
+    const tx = merkleDB.methods.updateMerkle(merkleRoot, merkleTreeIPFS);
     tx.send({
         nonce,
         from,

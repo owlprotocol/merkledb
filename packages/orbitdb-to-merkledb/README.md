@@ -23,3 +23,11 @@ https://github.com/orbitdb/orbit-db/blob/main/GUIDE.md#replicating-a-database
 
 * Parsing BN in JSON
   * https://github.com/wbuss/JSONBigNumber
+
+## IPFS Cluster
+To enable better stability, we configure a cluster of IPFS Nodes with fixed identities:
+
+* `ipfs1.json`: OrbitDB to MerkleDB IPFS
+* `ipfs2.json`: Frontend Demo Node
+* `ipfs3.json`: Coordinator node?
+* `ipfs4.json`: Firebase node?
