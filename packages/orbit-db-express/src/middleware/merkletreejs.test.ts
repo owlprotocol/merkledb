@@ -4,6 +4,7 @@ import { MerkleTree } from 'merkletreejs';
 import cbor from 'cbor';
 import { keccak256 } from 'web3-utils';
 import toSortedKeysObject from '../utils/toSortedKeysObject';
+import { assert } from 'chai';
 
 async function iterToBuffer(x: AsyncIterable<Uint8Array>) {
     const buffers = [];
@@ -20,7 +21,7 @@ describe('merktreejs.test.ts', () => {
         ipfs = await createIPFS();
     });
 
-    it('merktreejs', async () => {
+    it('merkletreejs', async () => {
         const rows = [{ name: 'Alice' }, { name: 'Bob' }, { name: 'Charlie' }];
         const rowsCBOR = rows.map((r) => cbor.encode(toSortedKeysObject(r)).toString('hex'));
         const tree = new MerkleTree(rowsCBOR, keccak256, {
@@ -29,19 +30,27 @@ describe('merktreejs.test.ts', () => {
         });
 
         //Publish on-chain
-        const merkleRoot1 = '0x' + tree.getRoot().toString('hex');
+        //const merkleRoot1 = '0x' + tree.getRoot().toString('hex');
         const result = await ipfs.add(JSON.stringify(rowsCBOR));
         const merkleTreeIPFS = result.cid.toString();
 
         const result2Iter = await ipfs.cat(merkleTreeIPFS);
-        const rewsCBOR2 = JSON.parse((await iterToBuffer(result2Iter)).toString('utf-8'));
+        const rowsCBOR2 = JSON.parse((await iterToBuffer(result2Iter)).toString('utf-8'));
 
+        /*
         console.debug({
             merkleRoot: merkleRoot1,
             merkleTreeIPFS,
             rowsCBOR,
-            rewsCBOR2,
+            rowsCBOR2,
         });
+        */
+        assert.deepEqual(rowsCBOR2, rowsCBOR, 'Non matching encoding!');
+        const tree2 = new MerkleTree(rowsCBOR2, keccak256, {
+            hashLeaves: true,
+            sortPairs: true,
+        });
+        assert.equal(tree2.getRoot().toString('hex'), tree.getRoot().toString('hex'), 'non-matchig merkle roots');
     });
 
     afterEach(async () => {

@@ -47,7 +47,7 @@ export async function getApp() {
         res.sendStatus(404);
     });
 
-    const merkleDBManager = new MerkleDBManager(dbManager, web3);
+    const merkleDBManager = new MerkleDBManager(dbManager, ipfs, web3);
     await merkleDBManager.initialize();
 
     const merkleDbRouter = await getMerkleDBRouter(merkleDBManager);
