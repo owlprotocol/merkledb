@@ -1,12 +1,8 @@
 import Web3 from 'web3';
 import { Contract } from 'web3-eth-contract';
-import { MerkleTree } from 'merkletreejs';
-import cbor from 'cbor';
-import { keccak256 } from 'web3-utils';
 import { IPFS } from 'ipfs';
 import MerkleDBArtifact from '../artifacts/contracts/MerkleDB.sol/MerkleDB.json';
 import OrbitDBManager from './OrbitDBManager';
-import toSortedKeysObject from '../utils/toSortedKeysObject';
 import toMerkleTree from '../utils/toMerkleTree';
 
 interface SenderParams {

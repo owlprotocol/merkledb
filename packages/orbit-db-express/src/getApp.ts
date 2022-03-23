@@ -2,6 +2,8 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import * as IPFS from 'ipfs';
 import Web3 from 'web3';
+//import wrtc from 'wrtc';
+//import WebRTCStar from 'libp2p-webrtc-star';
 import { ETH_PRIVATE_KEY, ETH_RPC } from './utils/environment';
 import getOrbitDB from './factory/getOrbitDB';
 import getOrbitDBIdentity from './factory/getOrbitDBIdentity';
@@ -11,7 +13,44 @@ import { getMerkleDBRouter } from './middleware/getMerkleDBRouter';
 import { MerkleDBManager } from './middleware/MerkleDBManager';
 
 export async function getApp() {
-    const ipfs = await IPFS.create();
+    const ipfs = await IPFS.create({ repo: './ipfs' });
+    /*
+    const ipfs = await IPFS.create({
+        config: {
+            Addresses: {
+                API: ['/ip4/0.0.0.0/tcp/5002'],
+                Swarm: [
+                    '/ip4/0.0.0.0/tcp/4002',
+                    '/ip4/127.0.0.1/tcp/4003/ws',
+                    //'/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star',
+                    //'/dns4/wrtc-star2.sjc.dwebops.pub/tcp/443/wss/p2p-webrtc-star',
+                ],
+            },
+        },
+        libp2p: {
+            modules: {
+                transport: [WebRTCStar],
+            },
+            config: {
+                peerDiscovery: {
+                    webRTCStar: {
+                        // <- note the lower-case w - see https://github.com/libp2p/js-libp2p/issues/576
+                        enabled: true,
+                    },
+                },
+                transport: {
+                    WebRTCStar: {
+                        // <- note the upper-case w- see https://github.com/libp2p/js-libp2p/issues/576
+                        wrtc,
+                    },
+                },
+            },
+        },
+    });
+    */
+
+    console.log('IPFS-JS Server listening on port 5002');
+
     const web3 = new Web3(ETH_RPC);
     web3.eth.accounts.wallet.add(ETH_PRIVATE_KEY);
 
