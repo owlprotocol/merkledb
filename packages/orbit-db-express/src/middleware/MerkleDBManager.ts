@@ -3,6 +3,7 @@ import { Contract } from 'web3-eth-contract';
 import { MerkleTree } from 'merkletreejs';
 import cbor from 'cbor';
 import { keccak256 } from 'web3-utils';
+import { IPFS } from 'ipfs';
 import MerkleDBArtifact from '../artifacts/contracts/MerkleDB.sol/MerkleDB.json';
 import OrbitDBManager from './OrbitDBManager';
 import toSortedKeysObject from '../utils/toSortedKeysObject';
@@ -15,8 +16,8 @@ interface SenderParams {
  *
  * @param db OrbitDB KV Database
  */
-export function snapshotOrbitDB(db: any, merkleDB: Contract, senderOptions: SenderParams) {
-    return new Promise((resolve) => {
+export function snapshotOrbitDB(db: any, ipfs: IPFS, merkleDB: Contract, senderOptions: SenderParams) {
+    return new Promise(async (resolve) => {
         //TODO: Handle op (currently assumes only PUT)
         const rows = Object.values(db.all).map((v: any) => v.payload.value);
         const rowsCBOR = rows.map((r) => cbor.encode(toSortedKeysObject(r)));
@@ -30,7 +31,10 @@ export function snapshotOrbitDB(db: any, merkleDB: Contract, senderOptions: Send
         const from = senderOptions.from;
         const nonce = senderOptions.nonce;
         const merkleRoot = '0x' + tree.getRoot().toString('hex');
-        const merkleTreeIPFS = '0x';
+
+        const leavesIPFS = tree.getLeaves();
+        const result = await ipfs.add(leavesIPFS);
+        const merkleTreeIPFS = result.cid.toString();
         const tx = merkleDB.methods.updateMerkle(merkleRoot, merkleTreeIPFS);
         tx.send({
             nonce,
@@ -156,7 +160,9 @@ export class MerkleDBManager {
         const db = await this.orbitDBManager.get(orbitDBAddress, { type: 'docstore', create: true });
         const contract = this.getMerkleDBContract(merkleDBAddress);
 
-        const { tree, hash } = await snapshotOrbitDB(db, contract, { from, nonce: this.nonce++ });
+        //TODO
+        //@ts-ignore
+        const { tree, hash } = await snapshotOrbitDB(db, ipfs, contract, { from, nonce: this.nonce++ });
         this.merkleDBTrees[orbitDBAddress] = tree;
 
         return { root: tree.getRoot().toString('hex'), hash };
