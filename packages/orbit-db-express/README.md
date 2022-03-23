@@ -6,9 +6,14 @@ A REST API server to manage OrbitDB.
 
 **Run Containers**
 ```
-docker run -p 5001:5001 -d --name ipfs -v /root/ipfs:/data/ipfs ipfs/go-ipfs daemon --migrate=true --agent-version-suffix=docker --enable-pubsub-experiment
-docker run  -p 3000:3000 -d --name orbit-db-express -v /root/orbitdb:/app/orbitdb  --env-file .env vulcanlink/orbit-db-express
+docker run  -p 3000:3000 -p 4002:4002 -d --name orbit-db-express -v /root/ipfs:/app/ipfs -v /root/orbitdb:/app/orbitdb  --env-file .env vulcanlink/orbit-db-express
 ```
+See ifps-js [docs] for info relevant ports.
+Expose the following ports:
+* 3000: Express Server
+* 4002: IPFS P2P
+The API ports are not exposed as the IPFS node is dedicated to OrbitDB.
+
 **Connect Network**
 https://stackoverflow.com/questions/42385977/accessing-a-docker-container-from-another-container
 ```
