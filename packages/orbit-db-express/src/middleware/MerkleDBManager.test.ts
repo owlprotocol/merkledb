@@ -1,24 +1,17 @@
 import * as IPFS from 'ipfs';
 import OrbitDB from 'orbit-db';
-import cbor from 'cbor';
 import { assert } from 'chai';
 import ganache from 'ganache';
 import Web3 from 'web3';
 import { Contract } from 'web3-eth-contract';
 import { existsSync, rmSync } from 'fs';
 
-import sleep from './utils/sleep.js';
-import { testDataToMerkleTree, writeTestDataToDB } from './test/data.js';
-import { snapshotDatabase } from './snapshot.js';
-import { onReplicateDatabase } from './replicate.js';
-import toSortedKeysObject from './utils/toSortedKeysObject.js';
-import { createRequire } from 'module';
+import sleep from '../utils/sleep';
+import { testDataToMerkleTree, writeTestDataToDB } from '../test/data';
+import { snapshotOrbitDB } from './MerkleDBManager';
+import MerkleDBArtifact from '../artifacts/contracts/MerkleDB.sol/MerkleDB.json';
 
-const require = createRequire(import.meta.url);
-// eslint-disable-next-line import/no-commonjs
-const MerkleDBArtifact = require('./artifacts/contracts/MerkleDB.sol/MerkleDB.json');
-
-describe('orbitDBtoMerkleDB.test.ts', () => {
+describe('MerkleDBManager.test.ts', () => {
     let web3: Web3;
     let merkleDB: Contract;
     let from: string;
@@ -87,8 +80,8 @@ describe('orbitDBtoMerkleDB.test.ts', () => {
         await sleep(1000);
     });
 
-    it('snapshot, replicate', async () => {
-        const tree = await snapshotDatabase(db2, merkleDB, { from, nonce });
+    it('snapshot', async () => {
+        const { tree } = await snapshotOrbitDB(db2, ipfs1, merkleDB, { from, nonce });
         const treeExpected = testDataToMerkleTree();
         const root1 = '0x' + tree.getRoot().toString('hex');
         const rootExpected1 = '0x' + treeExpected.getRoot().toString('hex');
@@ -104,6 +97,7 @@ describe('orbitDBtoMerkleDB.test.ts', () => {
         assert.equal(rootContract1, rootExpected1, 'Invalid Contract Root!');
 
         //On replicate listener
+        /*
         onReplicateDatabase(db2, tree, merkleDB, { from, nonce: nonce + 1 });
         //Update db1
         const donald = {
@@ -128,6 +122,7 @@ describe('orbitDBtoMerkleDB.test.ts', () => {
         //Check contract values
         const rootContract2 = await merkleDB.methods.merkleRoot().call();
         assert.equal(rootContract2, rootExpected2, 'Invalid Contract Root 2!');
+        */
     });
 
     /*

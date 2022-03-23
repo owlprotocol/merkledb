@@ -8,7 +8,7 @@ async function main() {
 
     // Create the database
     const orbitdb1 = await OrbitDB.createInstance(ipfs1, { directory: './orbitdb1' });
-    const db1 = await orbitdb1.docs('docs', { indexBy: 'id' });
+    const db1 = await orbitdb1.keyvalue('keyvalue');
 
     // Create the second peer
     const ipfs2_config = {
@@ -25,7 +25,7 @@ async function main() {
     // Open the first database for the second peer,
     // ie. replicate the database
     const orbitdb2 = await OrbitDB.createInstance(ipfs2, { directory: './orbitdb2' });
-    const db2 = await orbitdb2.docs(db1.address.toString());
+    const db2 = await orbitdb2.keyvalue(db1.address.toString());
 
     console.log('Making db2 check replica');
     db2.events.on('replicated', (address: string) => {
@@ -39,7 +39,7 @@ async function main() {
     // Start adding entries to the first database
     let x = 1;
     setInterval(async () => {
-        await db1.put({ id: x++, time: new Date().getTime() });
+        await db1.put(`${x++}`, { time: new Date().getTime() });
     }, 1000);
 }
 
