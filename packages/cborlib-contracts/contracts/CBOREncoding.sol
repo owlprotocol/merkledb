@@ -1,6 +1,36 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.4.19 < 0.9.0;
 
+/*
+
+Begin solidity-cborutils
+
+https://github.com/smartcontractkit/solidity-cborutils
+
+MIT License
+
+Copyright (c) 2018 SmartContract ChainLink, Ltd.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
 import "@ensdomains/buffer/contracts/Buffer.sol";
 
 library CBOREncoding {
@@ -18,7 +48,7 @@ library CBOREncoding {
     uint8 private constant TAG_TYPE_BIGNUM = 2;
     uint8 private constant TAG_TYPE_NEGATIVE_BIGNUM = 3;
 
-    function encodeFixedNumeric(Buffer.buffer memory buf, uint8 major, uint64 value) private pure {
+    function encodeFixedNumeric(Buffer.buffer memory buf, uint8 major, uint64 value) private view {
         if(value <= 23) {
             buf.appendUint8(uint8((major << 5) | value));
         } else if(value <= 0xFF) {
@@ -36,11 +66,11 @@ library CBOREncoding {
         }
     }
 
-    function encodeIndefiniteLengthType(Buffer.buffer memory buf, uint8 major) private pure {
+    function encodeIndefiniteLengthType(Buffer.buffer memory buf, uint8 major) private view {
         buf.appendUint8(uint8((major << 5) | 31));
     }
 
-    function encodeUInt(Buffer.buffer memory buf, uint value) internal pure {
+    function encodeUInt(Buffer.buffer memory buf, uint value) internal view {
         if(value > 0xFFFFFFFFFFFFFFFF) {
             encodeBigNum(buf, value);
         } else {
@@ -48,7 +78,7 @@ library CBOREncoding {
         }
     }
 
-    function encodeInt(Buffer.buffer memory buf, int value) internal pure {
+    function encodeInt(Buffer.buffer memory buf, int value) internal view {
         if(value < -0x10000000000000000) {
             encodeSignedBigNum(buf, value);
         } else if(value > 0xFFFFFFFFFFFFFFFF) {
@@ -60,35 +90,35 @@ library CBOREncoding {
         }
     }
 
-    function encodeBytes(Buffer.buffer memory buf, bytes memory value) internal pure {
+    function encodeBytes(Buffer.buffer memory buf, bytes memory value) internal view {
         encodeFixedNumeric(buf, MAJOR_TYPE_BYTES, uint64(value.length));
         buf.append(value);
     }
 
-    function encodeBigNum(Buffer.buffer memory buf, uint value) internal pure {
+    function encodeBigNum(Buffer.buffer memory buf, uint value) internal view {
       buf.appendUint8(uint8((MAJOR_TYPE_TAG << 5) | TAG_TYPE_BIGNUM));
       encodeBytes(buf, abi.encode(value));
     }
 
-    function encodeSignedBigNum(Buffer.buffer memory buf, int input) internal pure {
+    function encodeSignedBigNum(Buffer.buffer memory buf, int input) internal view {
       buf.appendUint8(uint8((MAJOR_TYPE_TAG << 5) | TAG_TYPE_NEGATIVE_BIGNUM));
       encodeBytes(buf, abi.encode(uint(-1 - input)));
     }
 
-    function encodeString(Buffer.buffer memory buf, string memory value) internal pure {
+    function encodeString(Buffer.buffer memory buf, string memory value) internal view {
         encodeFixedNumeric(buf, MAJOR_TYPE_STRING, uint64(bytes(value).length));
         buf.append(bytes(value));
     }
 
-    function startArray(Buffer.buffer memory buf) internal pure {
+    function startArray(Buffer.buffer memory buf) internal view {
         encodeIndefiniteLengthType(buf, MAJOR_TYPE_ARRAY);
     }
 
-    function startMap(Buffer.buffer memory buf) internal pure {
+    function startMap(Buffer.buffer memory buf) internal view {
         encodeIndefiniteLengthType(buf, MAJOR_TYPE_MAP);
     }
 
-    function endSequence(Buffer.buffer memory buf) internal pure {
+    function endSequence(Buffer.buffer memory buf) internal view {
         encodeIndefiniteLengthType(buf, MAJOR_TYPE_CONTENT_FREE);
     }
 }

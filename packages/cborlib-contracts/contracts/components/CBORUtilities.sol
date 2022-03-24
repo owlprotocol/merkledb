@@ -3,7 +3,9 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
-import "./CBORPrimitives.sol";
+import { CBORSpec as Spec } from "./CBORSpec.sol";
+import { CBORPrimitives as Primitives } from "./CBORPrimitives.sol";
+import { CBORDataStructures as DataStructures } from "./CBORDataStructures.sol";
 import "./ByteUtils.sol";
 
 /**
@@ -11,24 +13,6 @@ import "./ByteUtils.sol";
  *
  */
 library CBORUtilities {
-
-    uint8 constant private MAJOR_BITMASK = uint8(0xe0); // 11100000
-    uint8 constant private SHORTCOUNT_BITMASK = ~MAJOR_BITMASK; // 00011111
-    uint8 constant private UINT_TRUE = 1;
-    uint8 constant private UINT_FALSE = 0;
-    bytes1 constant private BREAK_MARKER = 0xff; // 111_11111
-
-    // Major Data Types
-    enum MajorType {
-        UnsignedInteger,
-        NegativeInteger,
-        ByteString,
-        TextString,
-        Array,
-        Map,
-        Semantic,
-        Special
-    }
 
     /**
      * @dev Intelligently parses supported CBOR-encoded types.
@@ -43,8 +27,8 @@ library CBORUtilities {
     function parseField(
         bytes memory encoding,
         uint cursor
-    ) internal pure returns (
-        MajorType majorType,
+    ) internal view returns (
+        Spec.MajorType majorType,
         uint8 shortCount,
         uint start,
         uint end,
@@ -56,22 +40,27 @@ library CBORUtilities {
         // Switch case on data type
 
         // Integers (Major Types: 0,1)
-        if (majorType == MajorType.UnsignedInteger ||
-            majorType == MajorType.NegativeInteger)
-            (start, end) = CBORPrimitives.parseInteger(cursor, shortCount);
+        if (majorType == Spec.MajorType.UnsignedInteger ||
+            majorType == Spec.MajorType.NegativeInteger)
+            (start, end) = Primitives.parseInteger(cursor, shortCount);
 
         // Strings (Major Types: 2,3)
-        else if (majorType == MajorType.ByteString ||
-            majorType == MajorType.TextString)
-            (start, end) = CBORPrimitives.parseString(encoding, cursor, shortCount);
+        else if (majorType == Spec.MajorType.ByteString ||
+            majorType == Spec.MajorType.TextString)
+            (start, end) = Primitives.parseString(encoding, cursor, shortCount);
+
+        // Arrays (Major Type: 4,5)
+        else if (majorType == Spec.MajorType.Array ||
+            majorType == Spec.MajorType.Map)
+            (, start, end) = DataStructures.parseDataStructure(encoding, cursor, majorType, shortCount);
 
         // Semantic Tags (Major Type: 6)
-        else if (majorType == MajorType.Semantic)
-            (start, end) = CBORPrimitives.parseSemantic(encoding, cursor, shortCount);
+        else if (majorType == Spec.MajorType.Semantic)
+            (start, end) = Primitives.parseSemantic(encoding, cursor, shortCount);
 
         // Special / Floats (Major Type: 7)
-        else if (majorType == MajorType.Special)
-            (start, end) = CBORPrimitives.parseSpecial(cursor, shortCount);
+        else if (majorType == Spec.MajorType.Special)
+            (start, end) = Primitives.parseSpecial(cursor, shortCount);
 
         // Unsupported types
         else
@@ -81,6 +70,9 @@ library CBORUtilities {
         next = end;
         // If our data exists at field definition, nudge the cursor one
         if (start == end) next++;
+        //
+        // if (majorType == Spec.MajorType.Array ||
+        //     majorType == Spec.MajorType.Map) next++;
 
         return (majorType, shortCount, start, end, next);
 
@@ -96,11 +88,11 @@ library CBORUtilities {
      */
     function extractValue(
         bytes memory encoding,
-        MajorType majorType,
+        Spec.MajorType majorType,
         uint8 shortCount,
         uint start,
         uint end
-    ) internal pure returns (
+    ) internal view returns (
         bytes memory value
     ) {
         if (start != end) {
@@ -109,11 +101,11 @@ library CBORUtilities {
             return value;
         }
 
-        if (majorType == MajorType.Special) {
+        if (majorType == Spec.MajorType.Special) {
             // Special means data is encoded INSIDE field
             if (shortCount == 21)
                 // True
-                value = abi.encodePacked(UINT_TRUE);
+                value = abi.encodePacked(Spec.UINT_TRUE);
 
             else if (
                 // Falsy
@@ -121,7 +113,7 @@ library CBORUtilities {
                 shortCount == 22 || // null
                 shortCount == 23    // undefined
             )
-                value = abi.encodePacked(UINT_FALSE);
+                value = abi.encodePacked(Spec.UINT_FALSE);
 
             return value;
 
@@ -143,40 +135,52 @@ library CBORUtilities {
      */
     function parseFieldEncoding(
         bytes1 fieldEncoding
-    ) internal pure returns (
-        MajorType majorType,
+    ) internal view returns (
+        Spec.MajorType majorType,
         uint8 shortCount
     ) {
         uint8 data = uint8(fieldEncoding);
-        majorType = MajorType((data & MAJOR_BITMASK) >> 5);
-        shortCount = data & SHORTCOUNT_BITMASK;
+        majorType = Spec.MajorType((data & Spec.MAJOR_BITMASK) >> 5);
+        shortCount = data & Spec.SHORTCOUNT_BITMASK;
     }
 
     /**
-     * @dev Counts encoded items until a BREAK or the end of the bytes
+     * @notice If data structures are nested, this will be a recursive function.
+     * @dev Counts encoded items until a BREAK or the end of the bytes.
      * @param encoding the encoded bytes array
      * @param cursor where to start scanning
+     * @param maxItems once this number of items is reached, return. Set 0 for infinite
      * @return totalItems total items found in encoding
+     * @return endCursor cursor position after scanning (non-inclusive)
      */
     function scanIndefiniteItems(
         bytes memory encoding,
-        uint cursor
-    ) internal pure returns (
-        uint totalItems
+        uint cursor,
+        uint maxItems
+    ) internal view returns (
+        uint totalItems,
+        uint endCursor
     ) {
         // Loop through our indefinite-length number until break marker
         for ( ; cursor < encoding.length; totalItems++) {
-            // See where the next field starts
-            (/*majorType*/, /*shortCount*/, /*start*/, /*end*/, uint next) = CBORUtilities.parseField(encoding, cursor);
 
-            // TODO - check for nested structs
+            // If we're at a BREAK_MARKER
+            if (encoding[cursor] == Spec.BREAK_MARKER) {
+                break;
+            }
+            // If we've reached our max items
+            else if (maxItems != 0 && totalItems == maxItems) {
+                break;
+            }
+
+            // See where the next field starts
+            (/*majorType*/, /*shortCount*/, /*start*/, /*end*/, uint next) = parseField(encoding, cursor);
 
             // Update our cursor
             cursor = next;
-
-            if (cursor < encoding.length && encoding[cursor] == BREAK_MARKER)
-                break;
         }
+
+        return (totalItems, cursor);
 
     }
 

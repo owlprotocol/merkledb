@@ -3,7 +3,8 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
-import "./CBORUtilities.sol";
+import { CBORSpec as Spec } from "./CBORSpec.sol";
+import { CBORUtilities as Utils } from "./CBORUtilities.sol";
 import "./ByteUtils.sol";
 
 /**
@@ -11,11 +12,6 @@ import "./ByteUtils.sol";
  *
  */
 library CBORPrimitives {
-
-    bytes1 constant private BREAK_MARKER = 0xff; // 111_11111
-
-    uint8 private constant TAG_TYPE_BIGNUM = 2;
-    uint8 private constant TAG_TYPE_NEGATIVE_BIGNUM = 3;
 
     /**
      * @dev Parses a CBOR-encoded integer and determines where data start/ends.
@@ -28,7 +24,7 @@ library CBORPrimitives {
         /*bytes memory encoding,*/
         uint cursor,
         uint shortCount
-    ) internal pure returns (
+    ) internal view returns (
         uint dataStart,
         uint dataEnd
     ) {
@@ -68,7 +64,7 @@ library CBORPrimitives {
         bytes memory encoding,
         uint cursor,
         uint shortCount
-    ) internal pure returns (
+    ) internal view returns (
         uint dataStart,
         uint dataEnd
     ) {
@@ -100,7 +96,7 @@ library CBORPrimitives {
             for ( ; cursor < encoding.length; ) {
                 cursor++;
                 countEnd++; // Non-inclusive means we want to include the marker
-                if (encoding[cursor] == BREAK_MARKER)
+                if (encoding[cursor] == Spec.BREAK_MARKER)
                     break;
             }
 
@@ -127,17 +123,17 @@ library CBORPrimitives {
         bytes memory encoding,
         uint cursor,
         uint shortCount
-    ) internal pure returns (
+    ) internal view returns (
         uint dataStart,
         uint dataEnd
     ) {
         // Check for BigNums
-        if (shortCount == TAG_TYPE_BIGNUM ||
-            shortCount == TAG_TYPE_NEGATIVE_BIGNUM) {
+        if (shortCount == Spec.TAG_TYPE_BIGNUM ||
+            shortCount == Spec.TAG_TYPE_NEGATIVE_BIGNUM) {
             // String-encoded bignum will start at next byte
             cursor++;
             // Forward request to parseString (bignums are string-encoded)
-            (, shortCount) = CBORUtilities.parseFieldEncoding(encoding[cursor]);
+            (, shortCount) = Utils.parseFieldEncoding(encoding[cursor]);
             (dataStart, dataEnd) = parseString(encoding, cursor, shortCount);
         }
 
@@ -158,7 +154,7 @@ library CBORPrimitives {
         /*bytes memory encoding,*/
         uint cursor,
         uint shortCount
-    ) internal pure returns (
+    ) internal view returns (
         uint dataStart,
         uint dataEnd
     ) {

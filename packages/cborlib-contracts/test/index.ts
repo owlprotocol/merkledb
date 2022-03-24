@@ -1,7 +1,7 @@
 import { assert, expect } from "chai";
 import { ethers } from "hardhat";
 import cbor from "cbor";
-import { toHex, padLeft, utf8ToHex, toBN, hexToUtf8, numberToHex } from "web3-utils";
+import { toHex, padLeft, utf8ToHex, toBN, hexToUtf8, numberToHex, leftPad } from "web3-utils";
 // eslint-disable-next-line node/no-missing-import, camelcase
 import { CBORDecoding__factory, CBORTesting__factory } from "../typechain";
 
@@ -20,7 +20,7 @@ describe("CBOR Decoding", function () {
         });
     });
 
-    it("Basic number encoding/decoding", async function () {
+    it("Basic primitive encoding/decoding", async function () {
         const decoder = await CBORTestingFactory.deploy();
 
         let value = -1;
@@ -61,6 +61,74 @@ describe("CBOR Decoding", function () {
             toHex(stringValue),
             "decoding failed!"
         );
+    });
+
+    it("Mapping decoding", async function () {
+        const decoder = await CBORTestingFactory.deploy();
+
+        const myMapping = { a: "1", b: "2", c: "3" };
+        const decoded = await decoder.testDecodeCBORMapping(
+            cbor.encode(myMapping)
+        );
+        // Assert all keys are equal
+        expect(decoded).to.deep.equal(
+            Object.entries(myMapping).map(([k, v]) => [
+                utf8ToHex(k),
+                utf8ToHex(v),
+            ])
+        );
+    });
+
+    it("Array decoding", async function () {
+        const decoder = await CBORTestingFactory.deploy();
+
+        const myMapping = [1, 2, 3, 4];
+        const decoded = await decoder.testDecodeCBORArray(
+            cbor.encode(myMapping)
+        );
+        console.log(`Decoded: ${decoded}`);
+        // Assert all keys are equal
+        expect(decoded).to.deep.equal(
+            myMapping.map((k) => leftPad(toHex(k), 2))
+        );
+    });
+
+    it("Nested array", async function () {
+        /**
+         * Testing is complicated by the fact that CBORDecode is nest-aware, but
+         * cannot decode and return a nested object. Instead, it has to decode one
+         * layer at a time (due to polymorphism limitations of Solidity).
+         */
+
+        const decoder = await CBORTestingFactory.deploy();
+
+        const myMapping = [[1, 2, [3], 4]];
+
+        const myMappingEncoded = cbor.encode(myMapping);
+        const decoded = await decoder.testDecodeCBORPrimitive(myMappingEncoded);
+        expect(cbor.encode(myMapping[0]).toString("hex")).to.deep.equal(
+            decoded[0].slice(2)
+        );
+    });
+
+    it("Nested mapping", async function () {
+        /**
+         * Testing is complicated by the fact that CBORDecode is nest-aware, but
+         * cannot decode and return a nested object. Instead, it has to decode one
+         * layer at a time (due to polymorphism limitations of Solidity).
+         */
+
+        const decoder = await CBORTestingFactory.deploy();
+
+        const myMapping = { 1: 2, 3: 4, 5: { 6: 7 }, 7: 8 };
+
+        const myMappingEncoded = cbor.encode(myMapping);
+        console.log(`Requesting decode: ${myMappingEncoded.toString("hex")}`);
+        const decoded = await decoder.testDecodeCBORMapping(myMappingEncoded);
+        console.log(`Decoded: ${JSON.stringify(decoded)}`);
+        // expect(cbor.encode(myMapping).toString("hex")).to.deep.equal(
+        //     decoded[0].slice(2)
+        // );
     });
 
     it("Linear Search Decoding", async function () {

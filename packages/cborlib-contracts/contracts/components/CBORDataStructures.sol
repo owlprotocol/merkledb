@@ -3,7 +3,8 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
-import "./CBORUtilities.sol";
+import { CBORSpec as Spec } from "./CBORSpec.sol";
+import { CBORUtilities as Utils } from "./CBORUtilities.sol";
 import "./ByteUtils.sol";
 
 /**
@@ -12,27 +13,25 @@ import "./ByteUtils.sol";
  */
 library CBORDataStructures {
 
-    bytes1 constant private BREAK_MARKER = 0xff; // 111_11111
-
     /**
-     * @dev Parses a CBOR-encoded mapping.
+     * @dev Parses a CBOR-encoded mapping into a 2d-array of bytes.
      * @param encoding the dynamic bytes array to scan
      * @param cursor position where mapping starts (in bytes)
      * @param shortCount short data identifier included in field info
      * @return decodedMapping the mapping decoded
      */
-    function extractMapping(
+    function expandMapping(
         bytes memory encoding,
         uint cursor,
         uint8 shortCount
-    ) internal pure returns (
+    ) internal view returns (
         bytes[2][] memory decodedMapping
     ) {
         // Track our mapping start
         uint mappingCursor = cursor + 1;
 
         // Count up how many keys we have
-        uint totalItems = getDataStructureItemLength(encoding, mappingCursor, CBORUtilities.MajorType.Map, shortCount);
+        (uint totalItems, , ) = getDataStructureItemLength(encoding, mappingCursor, Spec.MajorType.Map, shortCount);
         require(totalItems % 2 == 0, "Invalid mapping provided!");
 
         // Allocate new array
@@ -46,10 +45,10 @@ library CBORDataStructures {
             uint pair = item / 2; // 0,0,1,1,2,2..
 
             // See what our field looks like
-            (CBORUtilities.MajorType majorType, uint8 shortCount, uint start, uint end, uint next) = CBORUtilities.parseField(encoding, mappingCursor);
+            (Spec.MajorType majorType, uint8 shortCount, uint start, uint end, uint next) = Utils.parseField(encoding, mappingCursor);
 
             // Save our data
-            decodedMapping[pair][arrayIdx] = CBORUtilities.extractValue(encoding, majorType, shortCount, start, end);
+            decodedMapping[pair][arrayIdx] = Utils.extractValue(encoding, majorType, shortCount, start, end);
 
             // Update our cursor
             mappingCursor = next;
@@ -60,35 +59,123 @@ library CBORDataStructures {
     }
 
     /**
+     * @dev Parses a CBOR-encoded array into an array of bytes.
+     * @param encoding the dynamic bytes array to scan
+     * @param cursor position where array starts (in bytes)
+     * @param shortCount short data identifier included in field info
+     * @return decodedArray the array decoded
+     */
+    function expandArray(
+        bytes memory encoding,
+        uint cursor,
+        uint8 shortCount
+    ) internal view returns (
+        bytes[] memory decodedArray
+    ) {
+        // Track our array start
+        uint arrayCursor = cursor + 1;
+
+        // Count up how many keys we have
+        (uint totalItems, , ) = getDataStructureItemLength(encoding, arrayCursor, Spec.MajorType.Array, shortCount);
+
+        // Allocate new array
+        decodedArray = new bytes[](totalItems);
+
+        // Pull out our data
+        for (uint item = 0; item < totalItems; item++) {
+
+            // See what our field looks like
+            (Spec.MajorType majorType, uint8 shortCount, uint start, uint end, uint next) = Utils.parseField(encoding, arrayCursor);
+
+            // Save our data
+            decodedArray[item] = Utils.extractValue(encoding, majorType, shortCount, start, end);
+
+            // Update our cursor
+            arrayCursor = next;
+        }
+
+        return decodedArray;
+
+    }
+
+    /**
+    * @dev Returns the number of items (not pairs) and where values start/end.
+     * @param encoding the dynamic bytes array to scan
+     * @param cursor position where mapping starts (in bytes)
+     * @param majorType the corresponding major type identifier
+     * @param shortCount short data identifier included in field info
+     * @return totalItems the number of total items in the data structure
+     * @return dataStart the position where the values for the structure begin.
+     * @return dataEnd the position where the values for the structure end.
+     */
+    function parseDataStructure(
+        bytes memory encoding,
+        uint cursor,
+        Spec.MajorType majorType,
+        uint shortCount
+    ) internal view returns (
+        uint totalItems,
+        uint256 dataStart,
+        uint256 dataEnd
+    ) {
+
+        // Count how many items we have, also get start position and *maybe* end (see notice).
+        (totalItems, dataStart, dataEnd) = getDataStructureItemLength(encoding, cursor, majorType, shortCount);
+
+        // If didn't get dataEnd (scoreCode != 31), we need to manually fetch dataEnd
+        if (dataEnd == 0)
+            (, dataEnd) = Utils.scanIndefiniteItems(encoding, dataStart, totalItems);
+
+        return (totalItems, dataStart, dataEnd);
+
+    }
+
+    /**
+     * @notice Use `parseDataStructure` instead. This is for internal usage.
+     * Please take care when using `dataEnd`! This value is ONLY set if the data
+     * structure uses an indefinite amount of items, optimizing the efficiency when
+     * doing an initial scan to allocate arrays. If the value is not 0, the value
+     * can be relied on.
      * @dev Returns the number of items (not pairs) in a data structure.
      * @param encoding the dynamic bytes array to scan
      * @param cursor position where mapping starts (in bytes)
      * @param majorType the corresponding major type identifier
      * @param shortCount short data identifier included in field info
      * @return totalItems the number of total items in the data structure
+     * @return dataStart the position where the values for the structure begin.
+     * @return dataEnd the position where the values for the structure end.
      */
     function getDataStructureItemLength(
         bytes memory encoding,
         uint cursor,
-        CBORUtilities.MajorType majorType,
+        Spec.MajorType majorType,
         uint shortCount
-    ) internal pure returns (
-        uint256 totalItems
+    ) internal view returns (
+        uint256 totalItems,
+        uint256 dataStart,
+        uint256 dataEnd
     ) {
-        // Track extended count field
+
+        // Setup extended count (currently none)
         uint countStart = cursor + 1;
         uint countEnd = countStart;
 
         // Predefined count
         if (shortCount == 31) {
-            // Loop through our indefinite-length structure until break marker,
-            // then short-circuit.
-            totalItems = CBORUtilities.scanIndefiniteItems(encoding, cursor);
-            return totalItems;
+            // Loop through our indefinite-length structure until break marker.
+            (totalItems, dataEnd) = Utils.scanIndefiniteItems(encoding, cursor, 0);
+            // Data starts right where count ends (which is cursor+1)
+            dataStart = countEnd;
+            return (totalItems, countEnd, dataEnd);
         }
         else if (shortCount < 24) {
             // Count is stored in shortCount, we can short-circuit and end early
             totalItems = shortCount;
+            if (majorType == Spec.MajorType.Map)
+                totalItems *= 2;
+            // Data starts right where count ends (which is cursor+1)
+            dataStart = countEnd;
+            return (totalItems, countEnd, 0);  // 0 because we don't know where the data will end
         }
         else if (shortCount == 24) countEnd += 1;
         else if (shortCount == 25) countEnd += 2;
@@ -97,17 +184,18 @@ library CBORDataStructures {
         else if (shortCount >= 28 && shortCount <= 30)
             revert("Invalid RFC Shortcode!");
 
-        // Check if we have something we need to add up / interpret
-        if (countStart != countEnd)
-            totalItems = ByteUtils.bytesToUint256(
-                                    ByteUtils.sliceBytesMemory(
-                                        encoding, countStart, countEnd));
+        // We have something we need to add up / interpret
+        totalItems = ByteUtils.bytesToUint256(
+                                ByteUtils.sliceBytesMemory(encoding, countStart, countEnd));
 
-        // If this is a mapping, we read pairs – NOT items. Double the value
-        if (majorType == CBORUtilities.MajorType.Map)
+        // Maps count pairs, NOT items. We want items
+        if (majorType == Spec.MajorType.Map)
             totalItems *= 2;
 
-        return totalItems;
+        // Cursor starts on the next byte (non-inclusive)
+        dataStart = countEnd;
+
+        return (totalItems, countEnd, 0);  // 0 because we don't know where the data will end
     }
 
 }
