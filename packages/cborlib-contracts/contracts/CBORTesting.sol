@@ -24,7 +24,7 @@ contract CBORTesting {
         return CBORDecoding.decodeMappingGetValue(encoding, key);
     }
 
-    function testDecodeCBORPrimitive(bytes memory encoding) public view returns (bytes[] memory decodedData) {
+    function testDecodeCBORPrimitive(bytes memory encoding) public view returns (bytes memory decodedData) {
         return CBORDecoding.decodePrimitive(encoding);
     }
 

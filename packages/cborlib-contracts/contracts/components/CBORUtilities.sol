@@ -70,9 +70,6 @@ library CBORUtilities {
         next = end;
         // If our data exists at field definition, nudge the cursor one
         if (start == end) next++;
-        //
-        // if (majorType == Spec.MajorType.Array ||
-        //     majorType == Spec.MajorType.Map) next++;
 
         return (majorType, shortCount, start, end, next);
 
@@ -165,13 +162,11 @@ library CBORUtilities {
         for ( ; cursor < encoding.length; totalItems++) {
 
             // If we're at a BREAK_MARKER
-            if (encoding[cursor] == Spec.BREAK_MARKER) {
+            if (encoding[cursor] == Spec.BREAK_MARKER)
                 break;
-            }
             // If we've reached our max items
-            else if (maxItems != 0 && totalItems == maxItems) {
+            else if (maxItems != 0 && totalItems == maxItems)
                 break;
-            }
 
             // See where the next field starts
             (/*majorType*/, /*shortCount*/, /*start*/, /*end*/, uint next) = parseField(encoding, cursor);

@@ -101,7 +101,7 @@ library CBORDataStructures {
     /**
     * @dev Returns the number of items (not pairs) and where values start/end.
      * @param encoding the dynamic bytes array to scan
-     * @param cursor position where mapping starts (in bytes)
+     * @param cursor position where mapping data starts (in bytes)
      * @param majorType the corresponding major type identifier
      * @param shortCount short data identifier included in field info
      * @return totalItems the number of total items in the data structure
@@ -122,9 +122,18 @@ library CBORDataStructures {
         // Count how many items we have, also get start position and *maybe* end (see notice).
         (totalItems, dataStart, dataEnd) = getDataStructureItemLength(encoding, cursor, majorType, shortCount);
 
+        // If we have an empty array, we know the end
+        if (totalItems == 0)
+            dataEnd = dataStart;
+
         // If didn't get dataEnd (scoreCode != 31), we need to manually fetch dataEnd
         if (dataEnd == 0)
             (, dataEnd) = Utils.scanIndefiniteItems(encoding, dataStart, totalItems);
+
+        // If it's not the first array expansion, include data structure header for future decoding.
+        // We cannot return a recusively decoded structure due to polymorphism limitations
+        if (cursor != 0)
+            dataStart = cursor;
 
         return (totalItems, dataStart, dataEnd);
 
@@ -160,13 +169,14 @@ library CBORDataStructures {
         uint countStart = cursor + 1;
         uint countEnd = countStart;
 
-        // Predefined count
         if (shortCount == 31) {
+            // Indefinite count
             // Loop through our indefinite-length structure until break marker.
-            (totalItems, dataEnd) = Utils.scanIndefiniteItems(encoding, cursor, 0);
+            // TODO - this could break?
+            (totalItems, dataEnd) = Utils.scanIndefiniteItems(encoding, cursor + 1, 0);
             // Data starts right where count ends (which is cursor+1)
             dataStart = countEnd;
-            return (totalItems, countEnd, dataEnd);
+            return (totalItems, dataStart, dataEnd);
         }
         else if (shortCount < 24) {
             // Count is stored in shortCount, we can short-circuit and end early
@@ -175,7 +185,7 @@ library CBORDataStructures {
                 totalItems *= 2;
             // Data starts right where count ends (which is cursor+1)
             dataStart = countEnd;
-            return (totalItems, countEnd, 0);  // 0 because we don't know where the data will end
+            return (totalItems, dataStart, 0);  // 0 because we don't know where the data will end
         }
         else if (shortCount == 24) countEnd += 1;
         else if (shortCount == 25) countEnd += 2;
@@ -192,10 +202,10 @@ library CBORDataStructures {
         if (majorType == Spec.MajorType.Map)
             totalItems *= 2;
 
-        // Cursor starts on the next byte (non-inclusive)
+        // Recalculate where our data starts
         dataStart = countEnd;
 
-        return (totalItems, countEnd, 0);  // 0 because we don't know where the data will end
+        return (totalItems, dataStart, 0);  // 0 because we don't know where the data will end
     }
 
 }

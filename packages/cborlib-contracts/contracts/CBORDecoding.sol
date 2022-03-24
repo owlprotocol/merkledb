@@ -31,13 +31,13 @@ library CBORDecoding {
     ) public view returns(
         bytes[2][] memory decodedData
     ) {
-        // Ensure we start with a mapping
         uint cursor = 0;
+        // Type check
         (Spec.MajorType majorType, uint8 shortCount) = Utils.parseFieldEncoding(encoding[cursor]);
         require(majorType == Spec.MajorType.Map, "Object is not a mapping!");
 
+        // Decode and return
         decodedData = DataStructures.expandMapping(encoding, cursor, shortCount);
-
         return decodedData;
     }
 
@@ -57,13 +57,13 @@ library CBORDecoding {
     ) public view returns(
         bytes[] memory decodedData
     ) {
-        // Ensure we start with a mapping
         uint cursor = 0;
+        // Type check
         (Spec.MajorType majorType, uint8 shortCount) = Utils.parseFieldEncoding(encoding[cursor]);
-        require(majorType == Spec.MajorType.Array, "Object is not an array");
+        require(majorType == Spec.MajorType.Array, "Object is not an array!");
 
+        // Decode and return
         decodedData = DataStructures.expandArray(encoding, cursor, shortCount);
-
         return decodedData;
     }
 
@@ -81,33 +81,25 @@ library CBORDecoding {
     function decodePrimitive(
         bytes memory encoding
     ) public view returns(
-        bytes[] memory decodedData
+        bytes memory decodedData
     ) {
-        // Setup cursor
         uint cursor = 0;
+        // See what our field looks like
+        (Spec.MajorType majorType, uint8 shortCount, uint start, uint end, uint next) = Utils.parseField(encoding, cursor);
+        require(
+            majorType != Spec.MajorType.Array &&
+            majorType != Spec.MajorType.Map,
+            "Encoding is not a primitive!"
+        );
 
-        // Count how many items we have
-        (uint totalItems, ) = Utils.scanIndefiniteItems(encoding, cursor, 0);
-
-        // Allocate array
-        decodedData = new bytes[](totalItems);
-
-        // Push to Array
-        for (uint idx = 0; cursor < totalItems; idx++) {
-
-            // See what our field looks like
-            (Spec.MajorType majorType, uint8 shortCount, uint start, uint end, uint next) = Utils.parseField(encoding, cursor);
-
-            // Save our data
-            decodedData[idx] = Utils.extractValue(encoding, majorType, shortCount, start, end);
-
-            // Update our cursor
-            cursor = next;
-
-        }
-
+        // Save our data
+        decodedData = Utils.extractValue(encoding, majorType, shortCount, start, end);
         return decodedData;
     }
+
+    /********************
+     * Helper Functions *
+     *******************/
 
     /**
      * @dev Performs linear search through data for a key
