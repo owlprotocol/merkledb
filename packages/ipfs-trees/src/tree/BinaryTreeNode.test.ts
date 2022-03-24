@@ -37,13 +37,13 @@ describe('BinaryTreeNode.test.ts', () => {
 
         //Write data to docs database
         ipfs = await IPFS.create({
-            repo: './ipfs1',
+            repo: './ipfs',
             EXPERIMENTAL: {
                 pubsub: true,
             },
         });
 
-        for (let i = 1; i < 5; i++) {
+        for (let i = 0; i < 5; i++) {
             const key = new TextEncoder().encode(`${i}`);
             const cid = await ipfs.block.put(key);
             testKeys.push(key);
@@ -92,6 +92,20 @@ describe('BinaryTreeNode.test.ts', () => {
             values.forEach(async (v, i) => {
                 //Reference equality
                 assert.notEqual(v, expectedValues[i], `values[${i}] == expected[${i}]`);
+                //Value equality
+                assert.isTrue(v.equals(expectedValues[i]), `$values[${i}] ${v} != ${expectedValues[i]}`);
+            });
+        });
+
+        it('inorderTraversal:local', async () => {
+            const gen = tree1Local.inorderTraversal(ipfs);
+            const values = await asyncGeneratorToArray(gen);
+            //Expected traversal
+            const expectedValues = [node3, node1, node0, node2];
+
+            values.forEach(async (v, i) => {
+                //Reference equality
+                assert.equal(v, expectedValues[i], `values[${i}] != expected[${i}]`);
                 //Value equality
                 assert.isTrue(v.equals(expectedValues[i]), `$values[${i}] ${v} != ${expectedValues[i]}`);
             });

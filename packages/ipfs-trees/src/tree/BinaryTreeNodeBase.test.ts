@@ -19,7 +19,7 @@ describe('BinaryTreeNodeBase.test.ts', () => {
 
         //Write data to docs database
         ipfs = await IPFS.create({
-            repo: './ipfs1',
+            repo: './ipfs',
             EXPERIMENTAL: {
                 pubsub: true,
             },

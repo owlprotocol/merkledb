@@ -6,8 +6,8 @@ import { NODE_ENV } from '../utils/environment';
 
 export default class BinaryTreeNode extends BinaryTreeNodeBase {
     private keyContent: Uint8Array | undefined;
-    private leftNode: BinaryTreeNode | undefined;
-    private rightNode: BinaryTreeNode | undefined;
+    protected leftNode: BinaryTreeNode | undefined;
+    protected rightNode: BinaryTreeNode | undefined;
 
     //Cached parent node post traversal
     //This is NOT a safe pointer
@@ -30,6 +30,10 @@ export default class BinaryTreeNode extends BinaryTreeNodeBase {
         return new BinaryTreeNode(key, left, right, undefined, undefined);
     }
 
+    static override createRoot(key: CID): BinaryTreeNode {
+        return BinaryTreeNode.create(key, undefined, undefined);
+    }
+
     static async createWithLeaves(
         key: CID,
         leftNode: BinaryTreeNode | undefined,
@@ -37,8 +41,35 @@ export default class BinaryTreeNode extends BinaryTreeNodeBase {
     ): Promise<BinaryTreeNode> {
         const left = leftNode ? await leftNode.cid() : undefined;
         const right = rightNode ? await rightNode.cid() : undefined;
-
         return new BinaryTreeNode(key, left, right, leftNode, rightNode);
+    }
+
+    override withKey(key: CID): BinaryTreeNode {
+        return new BinaryTreeNode(key, this.left, this.right, this.leftNode, this.rightNode);
+    }
+
+    override withLeft(left: CID): BinaryTreeNode {
+        //Set left CID, resets left node
+        return new BinaryTreeNode(this.key, left, this.right, undefined, this.rightNode);
+    }
+
+    override withRight(right: CID): BinaryTreeNode {
+        //Set left CID, resets left node
+        return new BinaryTreeNode(this.key, this.left, right, this.leftNode, undefined);
+    }
+
+    async withLeftNode(leftNode: BinaryTreeNode): Promise<BinaryTreeNode> {
+        //Set left CID, resets left node
+        const n = new BinaryTreeNode(this.key, await leftNode.cid(), this.right, leftNode, this.rightNode);
+        leftNode.setParentNode(n);
+        return n;
+    }
+
+    async withRightNode(rightNode: BinaryTreeNode): Promise<BinaryTreeNode> {
+        //Set left CID, resets left node
+        const n = new BinaryTreeNode(this.key, this.left, await rightNode.cid(), this.leftNode, rightNode);
+        rightNode.setParentNode(n);
+        return n;
     }
 
     //Getters
@@ -72,35 +103,6 @@ export default class BinaryTreeNode extends BinaryTreeNodeBase {
                 );
             }
         }
-    }
-
-    //Setters
-    override withKey(key: CID): BinaryTreeNode {
-        return new BinaryTreeNode(key, this.left, this.right, this.leftNode, this.rightNode);
-    }
-
-    override withLeft(left: CID): BinaryTreeNode {
-        //Set left CID, resets left node
-        return new BinaryTreeNode(this.key, left, this.right, undefined, this.rightNode);
-    }
-
-    override withRight(right: CID): BinaryTreeNode {
-        //Set left CID, resets left node
-        return new BinaryTreeNode(this.key, this.left, right, this.leftNode, undefined);
-    }
-
-    async withLeftNode(leftNode: BinaryTreeNode): Promise<BinaryTreeNode> {
-        //Set left CID, resets left node
-        const n = new BinaryTreeNode(this.key, await leftNode.cid(), this.right, leftNode, this.rightNode);
-        leftNode.setParentNode(n);
-        return n;
-    }
-
-    async withRightNode(rightNode: BinaryTreeNode): Promise<BinaryTreeNode> {
-        //Set left CID, resets left node
-        const n = new BinaryTreeNode(this.key, this.left, await rightNode.cid(), this.leftNode, rightNode);
-        rightNode.setParentNode(n);
-        return n;
     }
 
     //Network Fetch
@@ -216,6 +218,15 @@ export default class BinaryTreeNode extends BinaryTreeNodeBase {
         return this.toStringDepth(0);
     }
 
+    async getKeyContentAll(ipfs: IPFS) {
+        const promises = [];
+        for await (const c of this.depthFirstTraversal(ipfs)) {
+            promises.push(c.getKeyContent(ipfs));
+        }
+
+        await Promise.all(promises);
+    }
+
     toStringDepth(d: number) {
         let str = '';
         for (let i = 0; i < d; i++) {
@@ -224,9 +235,11 @@ export default class BinaryTreeNode extends BinaryTreeNodeBase {
         //if (d > 0) str = str + ' |__';
         str = str + this.key.toString();
         if (this.keyContent) str = str + ` (${this.keyContent.toString()})`;
+        else str = str + '\n';
 
         if (this.leftNode) str = str + '\n' + this.leftNode.toStringDepth(d + 1);
         if (this.rightNode) str = str + '\n' + this.rightNode.toStringDepth(d + 1);
+        else str = str + '\n';
 
         return str;
     }

@@ -30,6 +30,10 @@ export default class BinaryTreeNodeBase {
         return new BinaryTreeNodeBase(key, left, right);
     }
 
+    static createRoot(key: CID) {
+        return BinaryTreeNodeBase.create(key, undefined, undefined);
+    }
+
     withKey(key: CID): BinaryTreeNodeBase {
         return BinaryTreeNodeBase.create(key, this.left, this.right);
     }
