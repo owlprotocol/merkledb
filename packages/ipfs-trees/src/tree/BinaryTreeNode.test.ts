@@ -1,16 +1,34 @@
 import * as IPFS from 'ipfs';
 import { existsSync, rmSync } from 'fs';
-import BinaryTreeNodeBase from './BinaryTreeNodeBase';
 import { assert } from 'chai';
 import { CID } from 'multiformats';
 import BinaryTreeNode from './BinaryTreeNode';
 import asyncGeneratorToArray from '../utils/asyncGeneratorToArray';
 
-describe('TNode.test.ts', () => {
+describe('BinaryTreeNode.test.ts', () => {
     let ipfs: any;
 
     const testKeys: Uint8Array[] = [];
     const testKeysCIDList: CID[] = [];
+
+    /**
+     *       node0
+     *      /   \
+     *   node1  node2
+     *     /
+     *  node3
+     *
+     */
+    let tree1Local: BinaryTreeNode;
+    let tree1Network: BinaryTreeNode;
+
+    let node0: BinaryTreeNode;
+    let node1: BinaryTreeNode;
+    let node0Network: BinaryTreeNode;
+    let node1Network: BinaryTreeNode;
+
+    let node3: BinaryTreeNode;
+    let node2: BinaryTreeNode;
 
     before(async () => {
         ['./ipfs'].map((p) => {
@@ -33,60 +51,26 @@ describe('TNode.test.ts', () => {
         }
     });
 
-    describe('TNodeBase', () => {
-        it('encode/decode', async () => {
-            const tNode1 = BinaryTreeNodeBase.create(testKeysCIDList[0], undefined, undefined);
-            const tNodeEncode = tNode1.encode();
+    beforeEach(async () => {
+        //Leaves
+        node3 = BinaryTreeNode.create(testKeysCIDList[3], undefined, undefined);
+        node2 = BinaryTreeNode.create(testKeysCIDList[2], undefined, undefined);
 
-            const tNode2 = BinaryTreeNodeBase.decode(tNodeEncode);
-            assert.isTrue(tNode1.key.equals(tNode2.key), 'tNode1.key != tNode2.key');
-            assert.isUndefined(tNode2.left);
-            assert.isUndefined(tNode2.right);
-            assert.isTrue(tNode1.equals(tNode2), 'tNode1 != tNode2');
+        //Nodes
+        node1 = await BinaryTreeNode.createWithLeaves(testKeysCIDList[1], node3, undefined);
+        node0 = await BinaryTreeNode.createWithLeaves(testKeysCIDList[0], node1, node2);
 
-            const cid1 = await tNode1.cid();
-            const cid2 = await tNode2.cid();
-            assert.isTrue(cid1.equals(cid2), 'tNode1.cid != tNode2.cid');
-        });
+        //Nodes with CID refs
+        node1Network = BinaryTreeNode.create(testKeysCIDList[1], await node3.put(ipfs), undefined);
+        node0Network = BinaryTreeNode.create(testKeysCIDList[0], await node1Network.put(ipfs), await node2.put(ipfs));
 
-        it('put', async () => {
-            const tNode1 = BinaryTreeNodeBase.create(testKeysCIDList[0], undefined, undefined);
-            const tNode1CID = await tNode1.put(ipfs);
-            const tNode1CIDExpected = await tNode1.cid();
-            assert.isTrue(tNode1CID.equals(tNode1CIDExpected), 'put() CID != computed CID');
-        });
-
-        it('get', async () => {
-            const tNode1 = BinaryTreeNodeBase.create(testKeysCIDList[0], undefined, undefined);
-            const tNode1CID = await tNode1.put(ipfs);
-
-            const tNode2 = await BinaryTreeNodeBase.get(ipfs, tNode1CID);
-            assert.isTrue(tNode1.equals(tNode2), 'tNode1 != tNode2');
-
-            const tNode2CID = await tNode1.put(ipfs);
-            assert.isTrue(tNode1CID.equals(tNode2CID), 'tNode1.cid != tNode2.cid');
-        });
+        tree1Local = node0;
+        tree1Network = node0Network;
     });
 
-    describe('TNode', () => {
+    describe('BinaryTreeNode', () => {
         it('preorderTraversal:local', async () => {
-            /**
-             *       node0
-             *      /   \
-             *   node1  node2
-             *     /
-             *  node3
-             *
-             */
-            //Leaves
-            const node3 = BinaryTreeNode.create(testKeysCIDList[3], undefined, undefined);
-            const node2 = BinaryTreeNode.create(testKeysCIDList[2], undefined, undefined);
-
-            //Nodes
-            const node1 = await BinaryTreeNode.createWithLeaves(testKeysCIDList[1], node3, undefined);
-            const node0 = await BinaryTreeNode.createWithLeaves(testKeysCIDList[2], node1, node2);
-
-            const gen = node0.preorderTraversal(ipfs);
+            const gen = tree1Local.preorderTraversal(ipfs);
             const values = await asyncGeneratorToArray(gen);
             //Expected traversal
             const expectedValues = [node0, node1, node3, node2];
@@ -100,26 +84,10 @@ describe('TNode.test.ts', () => {
         });
 
         it('preorderTraversal:network', async () => {
-            /**
-             *       node0
-             *      /   \
-             *   node1  node2
-             *     /
-             *  node3
-             *
-             */
-            //Leaves
-            const node3 = BinaryTreeNode.create(testKeysCIDList[3], undefined, undefined);
-            const node2 = BinaryTreeNode.create(testKeysCIDList[2], undefined, undefined);
-
-            //Nodes
-            const node1 = BinaryTreeNode.create(testKeysCIDList[1], await node3.put(ipfs), undefined);
-            const node0 = BinaryTreeNode.create(testKeysCIDList[2], await node1.put(ipfs), await node2.put(ipfs));
-
-            const gen = node0.preorderTraversal(ipfs);
+            const gen = tree1Network.preorderTraversal(ipfs);
             const values = await asyncGeneratorToArray(gen);
             //Expected traversal
-            const expectedValues = [node0, node1, node3, node2];
+            const expectedValues = [node0Network, node1Network, node3, node2];
 
             values.forEach(async (v, i) => {
                 //Reference equality
@@ -127,6 +95,31 @@ describe('TNode.test.ts', () => {
                 //Value equality
                 assert.isTrue(v.equals(expectedValues[i]), `$values[${i}] ${v} != ${expectedValues[i]}`);
             });
+        });
+
+        it('depthFirstTraversal:local', async () => {
+            const gen = tree1Local.depthFirstTraversal(ipfs);
+            const values = await asyncGeneratorToArray(gen);
+            //Expected traversal
+            const expectedValues = [node0, node1, node2, node3];
+
+            values.forEach(async (v, i) => {
+                //Reference equality
+                assert.equal(v, expectedValues[i], `values[${i}] != expected[${i}]`);
+                //Value equality
+                assert.isTrue(v.equals(expectedValues[i]), `$values[${i}] ${v} != ${expectedValues[i]}`);
+            });
+        });
+
+        it('toString:local', async () => {
+            for await (const n of tree1Local.depthFirstTraversal(ipfs)) {
+                await n.getKeyContent(ipfs);
+            }
+            console.log(tree1Local.toString());
+        });
+
+        it('toString:network', () => {
+            console.log(tree1Network.toString());
         });
     });
 

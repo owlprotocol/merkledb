@@ -1,6 +1,8 @@
 import { CID } from 'multiformats';
 import { IPFS } from 'ipfs';
+import invariant from 'tiny-invariant';
 import BinaryTreeNodeBase from './BinaryTreeNodeBase';
+import { NODE_ENV } from '../utils/environment';
 
 export default class BinaryTreeNode extends BinaryTreeNodeBase {
     private keyContent: Uint8Array | undefined;
@@ -8,7 +10,8 @@ export default class BinaryTreeNode extends BinaryTreeNodeBase {
     private rightNode: BinaryTreeNode | undefined;
 
     //Cached parent node post traversal
-    private parentNode: BinaryTreeNode | undefined;
+    //This is NOT a safe pointer
+    private readonly parentNode: BinaryTreeNode | undefined;
 
     protected constructor(
         key: CID,
@@ -34,7 +37,41 @@ export default class BinaryTreeNode extends BinaryTreeNodeBase {
     ): Promise<BinaryTreeNode> {
         const left = leftNode ? await leftNode.cid() : undefined;
         const right = rightNode ? await rightNode.cid() : undefined;
+
         return new BinaryTreeNode(key, left, right, leftNode, rightNode);
+    }
+
+    //Getters
+    getParentNode(): BinaryTreeNode | undefined {
+        const parentNode = this.parentNode;
+
+        //Sanity check
+        if (NODE_ENV !== 'production') {
+            if (parentNode) {
+                invariant(
+                    parentNode?.leftNode === this || parentNode?.rightNode === this,
+                    'parentNode does not have this as leaf',
+                );
+            }
+        }
+
+        return parentNode;
+    }
+
+    setParentNode(parentNode: BinaryTreeNode): void {
+        if (this.parentNode === parentNode) return;
+
+        //@ts-expect-error
+        this.parentNode = parentNode;
+        //Sanity check
+        if (NODE_ENV !== 'production') {
+            if (parentNode) {
+                invariant(
+                    parentNode?.leftNode === this || parentNode?.rightNode === this,
+                    'parentNode does not have this as leaf',
+                );
+            }
+        }
     }
 
     //Setters
@@ -54,12 +91,16 @@ export default class BinaryTreeNode extends BinaryTreeNodeBase {
 
     async withLeftNode(leftNode: BinaryTreeNode): Promise<BinaryTreeNode> {
         //Set left CID, resets left node
-        return new BinaryTreeNode(this.key, await leftNode.cid(), this.right, leftNode, this.rightNode);
+        const n = new BinaryTreeNode(this.key, await leftNode.cid(), this.right, leftNode, this.rightNode);
+        leftNode.setParentNode(n);
+        return n;
     }
 
     async withRightNode(rightNode: BinaryTreeNode): Promise<BinaryTreeNode> {
         //Set left CID, resets left node
-        return new BinaryTreeNode(this.key, this.left, await rightNode.cid(), this.leftNode, rightNode);
+        const n = new BinaryTreeNode(this.key, this.left, await rightNode.cid(), this.leftNode, rightNode);
+        rightNode.setParentNode(n);
+        return n;
     }
 
     //Network Fetch
@@ -102,7 +143,7 @@ export default class BinaryTreeNode extends BinaryTreeNodeBase {
     async *inorderTraversal(ipfs: IPFS): AsyncGenerator<BinaryTreeNode> {
         const leftNode = await this.getLeft(ipfs);
         if (leftNode) {
-            leftNode.parentNode = this;
+            leftNode.setParentNode(this);
             yield* leftNode.inorderTraversal(ipfs);
         }
 
@@ -110,7 +151,7 @@ export default class BinaryTreeNode extends BinaryTreeNodeBase {
 
         const rightNode = await this.getRight(ipfs);
         if (rightNode) {
-            rightNode.parentNode = this;
+            rightNode.setParentNode(this);
             yield* rightNode.inorderTraversal(ipfs);
         }
     }
@@ -121,13 +162,13 @@ export default class BinaryTreeNode extends BinaryTreeNodeBase {
 
         const leftNode = await this.getLeft(ipfs);
         if (leftNode) {
-            leftNode.parentNode = this;
+            leftNode.setParentNode(this);
             yield* leftNode.preorderTraversal(ipfs);
         }
 
         const rightNode = await this.getRight(ipfs);
         if (rightNode) {
-            rightNode.parentNode = this;
+            rightNode.setParentNode(this);
             yield* rightNode.preorderTraversal(ipfs);
         }
     }
@@ -136,16 +177,57 @@ export default class BinaryTreeNode extends BinaryTreeNodeBase {
     async *postorderTraversal(ipfs: IPFS): AsyncGenerator<BinaryTreeNode> {
         const leftNode = await this.getLeft(ipfs);
         if (leftNode) {
-            leftNode.parentNode = this;
+            leftNode.setParentNode(this);
             yield* leftNode.postorderTraversal(ipfs);
         }
 
         const rightNode = await this.getRight(ipfs);
         if (rightNode) {
-            rightNode.parentNode = this;
+            rightNode.setParentNode(this);
             yield* rightNode.postorderTraversal(ipfs);
         }
 
         yield this;
+    }
+
+    //Left, Right, Root
+    async *depthFirstTraversal(ipfs: IPFS): AsyncGenerator<BinaryTreeNode> {
+        const arr: BinaryTreeNode[] = [this];
+        while (arr.length > 0) {
+            const pop = arr.pop()!;
+            yield pop;
+
+            const leftNode = await pop.getLeft(ipfs);
+            if (leftNode) {
+                leftNode.setParentNode(pop);
+                arr.push(leftNode);
+            }
+
+            const rightNode = await pop.getRight(ipfs);
+            if (rightNode) {
+                rightNode.setParentNode(pop);
+                arr.push(rightNode);
+            }
+        }
+    }
+
+    //String
+    toString() {
+        return this.toStringDepth(0);
+    }
+
+    toStringDepth(d: number) {
+        let str = '';
+        for (let i = 0; i < d; i++) {
+            str = str + '    ';
+        }
+        //if (d > 0) str = str + ' |__';
+        str = str + this.key.toString();
+        if (this.keyContent) str = str + ` (${this.keyContent.toString()})`;
+
+        if (this.leftNode) str = str + '\n' + this.leftNode.toStringDepth(d + 1);
+        if (this.rightNode) str = str + '\n' + this.rightNode.toStringDepth(d + 1);
+
+        return str;
     }
 }

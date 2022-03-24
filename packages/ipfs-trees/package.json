@@ -58,6 +58,7 @@
     },
     "dependencies": {
         "@ipld/dag-json": "^8.0.8",
-        "multiformats": "^9.6.4"
+        "multiformats": "^9.6.4",
+        "tiny-invariant": "^1.2.0"
     }
 }
