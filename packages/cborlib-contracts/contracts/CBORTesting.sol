@@ -16,17 +16,20 @@ contract CBORTesting {
 
     using Buffer for Buffer.buffer;
 
-    function testDecodeCBORMapping(bytes memory encoding) public pure returns (bytes[2][] memory decodedData) {
-        return CBORDecoding.decodeCBORMapping(encoding);
+    function testDecodeCBORMapping(bytes memory encoding) public view returns (bytes[2][] memory decodedData) {
+        return CBORDecoding.decodeMapping(encoding);
     }
 
-    function testDecodeCBORMappingGetValue(bytes memory encoding, bytes memory key) public pure returns (bytes memory value) {
-        return CBORDecoding.decodeCBORMappingGetValue(encoding, key);
+    function testDecodeCBORMappingGetValue(bytes memory encoding, bytes memory key) public view returns (bytes memory value) {
+        return CBORDecoding.decodeMappingGetValue(encoding, key);
     }
 
-    function testDecodeCBORPrimitive(bytes memory encoding) public pure returns (bytes[] memory decodedData) {
-        return CBORDecoding.decodeCBORPrimitive(encoding);
+    function testDecodeCBORPrimitive(bytes memory encoding) public view returns (bytes memory decodedData) {
+        return CBORDecoding.decodePrimitive(encoding);
     }
 
+    function testDecodeCBORArray(bytes memory encoding) public view returns (bytes[] memory decodedData) {
+        return CBORDecoding.decodeArray(encoding);
+    }
 
 }

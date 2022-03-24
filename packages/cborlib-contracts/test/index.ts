@@ -1,11 +1,22 @@
 import { assert, expect } from "chai";
 import { ethers } from "hardhat";
 import cbor from "cbor";
-import { toHex, padLeft, utf8ToHex, toBN, hexToUtf8, numberToHex } from "web3-utils";
-// eslint-disable-next-line node/no-missing-import, camelcase
-import { CBORDecoding__factory, CBORTesting__factory } from "../typechain";
+import { toHex, padLeft, utf8ToHex } from "web3-utils";
+import {
+    // eslint-disable-next-line camelcase
+    CBORDecoding__factory,
+    // eslint-disable-next-line camelcase
+    CBORTesting__factory,
+    CBORTesting,
+    // eslint-disable-next-line node/no-missing-import
+} from "../typechain";
+// eslint-disable-next-line node/no-missing-import
+import dndData from "./dndData";
 
 describe("CBOR Decoding", function () {
+    this.timeout(60_000);
+
+    let decoder: CBORTesting;
     // eslint-disable-next-line camelcase
     let CBORTestingFactory: CBORTesting__factory;
     // eslint-disable-next-line camelcase
@@ -18,49 +29,93 @@ describe("CBOR Decoding", function () {
                 CBORDecoding: (await CBORDecodingFactory.deploy()).address,
             },
         });
+        // Deploy our decoder library
+        decoder = await CBORTestingFactory.deploy();
     });
 
-    it("Basic number encoding/decoding", async function () {
-        const decoder = await CBORTestingFactory.deploy();
-
+    it("Basic primitive encoding/decoding", async function () {
         let value = -1;
         assert.equal(
-            (await decoder.testDecodeCBORPrimitive(cbor.encode(value)))[0],
-            "0x00",
+            await decoder.testDecodeCBORPrimitive(cbor.encode(value)),
+            toProperHex(-1 - value),
             "decoding failed!"
         );
 
         value = 100_000;
         assert.equal(
-            (await decoder.testDecodeCBORPrimitive(cbor.encode(value)))[0],
-            padLeft(toHex(value), 8),
+            await decoder.testDecodeCBORPrimitive(cbor.encode(value)),
+            toProperHex(value),
             "decoding failed!"
         );
 
         value = -100;
         assert.equal(
-            (await decoder.testDecodeCBORPrimitive(cbor.encode(value)))[0],
-            "0x63",
+            await decoder.testDecodeCBORPrimitive(cbor.encode(value)),
+            toProperHex(-1 - value),
             "decoding failed!"
         );
 
         let stringValue = "im a string";
         assert.equal(
-            (
-                await decoder.testDecodeCBORPrimitive(cbor.encode(stringValue))
-            )[0],
-            toHex(stringValue),
+            await decoder.testDecodeCBORPrimitive(cbor.encode(stringValue)),
+            toProperHex(stringValue),
             "decoding failed!"
         );
 
         stringValue = "im a long string".repeat(100);
         assert.equal(
-            (
-                await decoder.testDecodeCBORPrimitive(cbor.encode(stringValue))
-            )[0],
-            toHex(stringValue),
+            await decoder.testDecodeCBORPrimitive(cbor.encode(stringValue)),
+            toProperHex(stringValue),
             "decoding failed!"
         );
+    });
+
+    it("Mapping decoding", async function () {
+        const myMapping = { a: 1, b: "2", c: "3" };
+        const decoded = await decoder.testDecodeCBORMapping(
+            cbor.encode(myMapping)
+        );
+        // Assert
+        expect(decoded).to.deep.equal(toExpectedValue(myMapping));
+    });
+
+    it("Array decoding", async function () {
+        const myMapping = [1, 2, 3, 4];
+        const decoded = await decoder.testDecodeCBORArray(
+            cbor.encode(myMapping)
+        );
+        // Assert all keys are equal
+        expect(decoded).to.deep.equal(toExpectedValue(myMapping));
+    });
+
+    it("Nested array", async function () {
+        const myMapping = [[1, 2, [3], 4]];
+        const decoded = await decoder.testDecodeCBORArray(
+            cbor.encode(myMapping)
+        );
+        // Assert keys equal
+        expect(decoded).to.deep.equal(toExpectedValue(myMapping));
+    });
+
+    it("Nested mapping", async function () {
+        const myMapping = { 1.2: 2, 3: { 4: { 10: 12.5 } }, 5: { 6: 7 }, 7: 8 };
+        const decoded = await decoder.testDecodeCBORMapping(
+            cbor.encode(myMapping)
+        );
+        // Assert keys equal
+        expect(decoded).to.deep.equal(toExpectedValue(myMapping));
+    });
+
+    it("Test Data", async function () {
+        const character = dndData.character;
+        const decoded = await decoder.testDecodeCBORMapping(
+            cbor.encode(character),
+            {
+                gasLimit: 100_000_000,
+            }
+        );
+        // Assert decoded
+        expect(decoded).to.deep.equal(toExpectedValue(character));
     });
 
     it("Linear Search Decoding", async function () {
@@ -75,8 +130,6 @@ describe("CBOR Decoding", function () {
     });
 
     it("Test with game data", async () => {
-        const decoder = await CBORTestingFactory.deploy();
-
         const profiles = [
             {
                 id: "1",
@@ -103,34 +156,66 @@ describe("CBOR Decoding", function () {
                 premium: false,
             },
         ];
-
         for (const profile of profiles) {
-            const encodedProfile = cbor.encode(profile);
             const decodedProfile = await decoder.testDecodeCBORMapping(
-                encodedProfile
+                cbor.encode(profile)
             );
-
-            let iteration = 0;
-            for (let [key, value] of Object.entries(profile)) {
-                // Type checks
-                if (typeof value === "boolean") value = Number(value);
-                if (typeof value === "string") value = utf8ToHex(value);
-                if (typeof value === "number") value = padLeft(toHex(value), 2);
-
-                key = utf8ToHex(key);
-
-                assert.equal(
-                    decodedProfile[iteration][0],
-                    key,
-                    `key mismatch! ${[hexToUtf8(key), value]}`
-                );
-                assert.equal(
-                    decodedProfile[iteration][1],
-                    value,
-                    `value mismatch! ${[hexToUtf8(key), value]}`
-                );
-                iteration++;
-            }
+            expect(decodedProfile).to.deep.equal(toExpectedValue(profile));
         }
     });
 });
+
+export function toExpectedValue(value: any) {
+    /**
+     * Testing is complicated by the fact that CBORDecode is nest-aware, but
+     * cannot decode and return a nested object. Instead, it has to decode one
+     * layer at a time (due to polymorphism limitations of Solidity).
+     */
+    let expectedValue;
+    if (Array.isArray(value)) expectedValue = value.map((v) => toProperHex(v));
+    else if (typeof value === "object")
+        expectedValue = Object.entries(value).map(([k, v]) => [
+            utf8ToHex(k),
+            toProperHex(v),
+        ]);
+    else expectedValue = toProperHex(value);
+
+    return expectedValue;
+}
+
+export const toProperHex = (v: any) => {
+    let vencoded;
+    if (typeof v === "object")
+        // Convert nested objects to cbor
+        vencoded = "0x" + cbor.encode(v).toString("hex");
+    else if (typeof v === "number") {
+        // Convert to hex and pad appropriately
+        vencoded = base2Padding(toHex(v));
+    } else if (typeof v === "string") {
+        // Strings don't need special padding
+        vencoded = utf8ToHex(v);
+    } else {
+        vencoded = toHex(v);
+    }
+    return vencoded;
+};
+
+export const base2Padding = (hexString: string) => {
+    /**
+     * Calculates and formats proper byte padding for expected Solidity bytes.
+     * A hex with 3 digits (0x003) needs 4 digits of padding (0x0004).
+     * A hex with 5 digits needs 8 digits of padding.
+     * A hex with 12 digits needs 16 digits of padding.
+     * It's always the next highest base2 value. (2,4,8,16,32,...)
+     */
+    // Slice off '0x'
+    let hexLength = hexString.length;
+    if (hexString.slice(0, 2) === "0x") hexLength -= 2;
+    // Calculate closest base2 exponent (2, 4, 8, etc)
+    let base2Exponent;
+    if (hexLength > 1) {
+        base2Exponent = Math.ceil(Math.log2(hexLength));
+    } else base2Exponent = 1;
+    // Return padded
+    return padLeft(hexString, 2 ** base2Exponent);
+};
