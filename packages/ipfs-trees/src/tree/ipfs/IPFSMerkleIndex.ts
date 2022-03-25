@@ -6,8 +6,8 @@ import { IPFS } from 'ipfs';
 
 export interface IPFSMerkleIndexData {
     hash: Digest<18, number>;
-    leftCID: CID | undefined;
-    rightCID: CID | undefined;
+    leftHashCID: CID | undefined;
+    rightHashCID: CID | undefined;
 }
 
 export default class IPFSMerkleIndex {
@@ -95,6 +95,10 @@ export default class IPFSMerkleIndex {
         }
     }
 
+    equals(a: IPFSMerkleIndex): boolean {
+        //TODO: Optimize UInt8 comparison
+        return this.hash.bytes.toString() === a.hash.bytes.toString();
+    }
     isNullNode(): boolean {
         return this.leftCID === undefined && this.rightCID == undefined;
     }
@@ -106,11 +110,11 @@ export default class IPFSMerkleIndex {
         //Data
         const data: IPFSMerkleIndexData = {
             hash: this.hash,
-            leftCID: undefined,
-            rightCID: undefined,
+            leftHashCID: undefined,
+            rightHashCID: undefined,
         };
-        if (this.leftCID) data.leftCID = this.leftCID;
-        if (this.rightCID) data.rightCID = this.rightCID;
+        if (this.leftCID) data.leftHashCID = this.leftCID;
+        if (this.rightCID) data.rightHashCID = this.rightCID;
         //Encode
         this._encodeCache = encode(data);
         return this._encodeCache;
@@ -118,7 +122,7 @@ export default class IPFSMerkleIndex {
 
     static decode(data: ByteView<IPFSMerkleIndexData>): IPFSMerkleIndex {
         //Decode
-        const { hash, leftCID, rightCID } = decode(data);
+        const { hash, leftHashCID: leftCID, rightHashCID: rightCID } = decode(data);
         return IPFSMerkleIndex.create(hash, leftCID, rightCID);
     }
 
