@@ -88,9 +88,9 @@ describe('IPFSMerkleIndex.test.ts', () => {
         it('merkletreejs: fuzzing', async () => {
             const values: number[] = [];
             for (let i = 0; i++; i < 100) {
-                values.push(Math.ceil(Math.random() * 100))
+                values.push(Math.ceil(Math.random() * 100));
             }
-        }
+        });
 
         it('n', async () => {
             /**
