@@ -1,5 +1,5 @@
 import NumberTreeIndex from './NumberTreeIndex';
-import TreeSearch from './TreeSearch';
+import TreeSearch from '../TreeSearch';
 
 export default class NumberTree extends TreeSearch<NumberTreeIndex> {
     private readonly key: NumberTreeIndex;

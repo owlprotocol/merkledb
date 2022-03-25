@@ -1,7 +1,7 @@
 import { CID } from 'multiformats';
 import { ByteView, encode, decode, code } from '@ipld/dag-json';
 import { sha256 } from 'multiformats/hashes/sha2';
-import Comparable from '../interfaces/Comparable';
+import Comparable from '../../interfaces/Comparable';
 import { Digest } from 'multiformats/hashes/digest';
 import { IPFS } from 'ipfs';
 
