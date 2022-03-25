@@ -30,16 +30,21 @@ export default abstract class TreeMerkle<T> {
     //Joins two nodes, creating a new node and making them siblings
     abstract join(a: TreeMerkle<T>): Promise<TreeMerkle<T>>;
 
-    //Proof
-    async *merkleProofGenerator(): AsyncGenerator<TreeMerkle<T>> {
+    //Yield siblings for merkle proof, last yield is root
+    async *recurseSibling(): AsyncGenerator<TreeMerkle<T>> {
         //Root node
         const parent = await this.getParent();
-        if (!parent) return this;
+        if (!parent) {
+            yield this;
+            return;
+        }
 
         //Recurse up with sibling
         const sibling = await this.getSibling();
         if (sibling) yield sibling;
         else throw new Error('Missing sibling for proof');
+
+        yield* parent.recurseSibling();
     }
 
     //Insertion
