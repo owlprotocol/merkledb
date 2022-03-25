@@ -84,21 +84,18 @@ describe('IPFSTree.test.ts', () => {
 
             const node0Decode = await IPFSTree.decode(node0Encode);
             assert.notEqual(node0, node0Decode);
-
-            const key0 = await node0.getKey();
-            const key0Decode = await node0Decode.getKey();
-            assert.notEqual(key0Decode, key0);
-            assert.isTrue(key0Decode.equals(key0));
-            assert.isTrue(key0Decode.valueCID.equals(key0.valueCID), 'key0Decode.valueCID != key0.valueCID');
-
             const node0CID = await node0.cid();
             const node0DecodeCID = await node0Decode.cid();
-            assert.isTrue(node0DecodeCID.equals(node0CID));
+            assert.isTrue(node0DecodeCID.equals(node0CID), 'node0Decoded.cid != node0.cid');
+
+            const node0KeyCID = await node0.getKeyCID();
+            const node0DecodeKeyCID = await node0Decode.getKeyCID();
+            assert.isTrue(node0DecodeKeyCID.equals(node0KeyCID), 'node0Decoded.key.cid != node0.key.cid');
         });
 
         describe('Network', async () => {
             let ipfs: IPFS;
-            before(async () => {
+            beforeEach(async () => {
                 ['./ipfs'].map((p) => {
                     if (existsSync(p)) rmSync(p, { recursive: true });
                 });
@@ -108,40 +105,41 @@ describe('IPFSTree.test.ts', () => {
                     repo: './ipfs',
                 });
                 IPFSTree.setIPFS(ipfs);
+                IPFSTree._totalNetworkGet = 0;
+                IPFSTree._totalNetworkPut = 0;
+                IPFSTreeIndex._totalNetworkGet = 0;
+                IPFSTreeIndex._totalNetworkPut = 0;
             });
 
-            after(async () => {
+            afterEach(async () => {
                 await ipfs.stop();
                 ['./ipfs'].map((p) => {
                     if (existsSync(p)) rmSync(p, { recursive: true });
                 });
             });
 
-            it('put', async () => {
+            it('put/get()', async () => {
                 const node0 = IPFSTree.createLeafWithKey(0, cid);
                 const node0CID = await node0.put();
-                const node0CIDExpected = await node0.cid();
-                assert.isTrue(node0CID.equals(node0CIDExpected), 'put() CID != computed CID');
-            });
+                assert.equal(IPFSTree._totalNetworkPut, 1, 'IPFSTree._totalNetworkPut');
 
-            it.skip('get', async () => {
-                const node0 = IPFSTree.createLeafWithKey(0, cid);
-                const node0CID = await node0.put();
+                const node0FromCID = await IPFSTree.createFromCID(node0CID);
+                assert.equal(IPFSTree._totalNetworkGet, 1, 'IPFSTree._totalNetworkGet');
 
-                //Pushed in put() test
-                const node0Load = await IPFSTree.createFromCID(node0CID);
-                const key0 = await node0.getKey();
-                const key0Decode = await node0Load.getKey();
-                assert.notEqual(key0Decode, key0);
-                assert.isTrue(key0Decode.equals(key0));
-                assert.isTrue(key0Decode.valueCID.equals(key0.valueCID), 'key0Decode.valueCID != key0.valueCID');
+                const node0Key = await node0.getKey();
+                await node0Key.put();
+                assert.equal(IPFSTreeIndex._totalNetworkPut, 1, 'IPFSTreeIndex._totalNetworkPut');
+
+                const node0FromCIDKey = await node0FromCID.getKey();
+                assert.equal(IPFSTreeIndex._totalNetworkGet, 1, 'IPFSTreeIndex._totalNetworkGet');
+                assert.isTrue(node0FromCIDKey.equals(node0Key), 'node0FromCIDKey.key != node0.key');
             });
         });
     });
 
     describe('search', () => {
         it('root', async () => {
-            const searchResult = await tree.search(IPFSTree.createLeafWithKey(3, cid));
+            const searchResult = await tree.search(IPFSTreeIndex.create(3, cid));
             const searchResultContent = await searchResult!.getKey();
 
             assert.isTrue(searchResultContent.equals(IPFSTreeIndex.create(3, cid)));
@@ -149,7 +147,7 @@ describe('IPFSTree.test.ts', () => {
         });
 
         it('leaf', async () => {
-            const searchResult = await tree.search(IPFSTree.createLeafWithKey(1, cid));
+            const searchResult = await tree.search(IPFSTreeIndex.create(1, cid));
             const searchResultContent = await searchResult!.getKey();
 
             assert.isTrue(searchResultContent.equals(IPFSTreeIndex.create(1, cid)));
@@ -157,12 +155,8 @@ describe('IPFSTree.test.ts', () => {
         });
 
         it('not found!', async () => {
-            const searchResult = await tree.search(IPFSTree.createLeafWithKey(0, cid));
-            const searchResultContent = await searchResult!.getKey();
-            assert.isFalse(searchResultContent.equals(IPFSTreeIndex.create(0, cid)));
-            //Leaf node is 1
-            assert.isTrue(searchResultContent.equals(IPFSTreeIndex.create(1, cid)));
-            assert.equal(searchResult, node1);
+            const searchResult = await tree.search(IPFSTreeIndex.create(0, cid));
+            assert.isUndefined(searchResult);
         });
 
         describe('Network', async () => {
@@ -177,6 +171,10 @@ describe('IPFSTree.test.ts', () => {
                     repo: './ipfs',
                 });
                 IPFSTree.setIPFS(ipfs);
+                IPFSTree._totalNetworkGet = 0;
+                IPFSTree._totalNetworkPut = 0;
+                IPFSTreeIndex._totalNetworkGet = 0;
+                IPFSTreeIndex._totalNetworkPut = 0;
             });
 
             after(async () => {
@@ -186,7 +184,7 @@ describe('IPFSTree.test.ts', () => {
                 });
             });
 
-            it.skip('recurse load', async () => {
+            it('recurse load', async () => {
                 /**
                  *       node0
                  *         \
@@ -196,21 +194,30 @@ describe('IPFSTree.test.ts', () => {
                  *             \
                  *             node3
                  */
-                const node3 = IPFSTree.createLeafWithKey(0, cid);
+                const node3 = IPFSTree.createLeafWithKey(3, cid);
                 const node2 = IPFSTree.createLeafWithKey(2, cid).withRight(node3);
                 const node1 = IPFSTree.createLeafWithKey(1, cid).withRight(node2);
                 const node0 = IPFSTree.createLeafWithKey(0, cid).withRight(node1);
-                const searchResult1 = await (await node0.search(IPFSTree.createLeafWithKey(3, cid))).getKey();
-                assert.equal(searchResult1.key, 3);
+                const searchResult1 = await node0.search(IPFSTreeIndex.create(3, cid));
+                const searchResult1Key = await searchResult1?.getKey();
+                assert.equal(searchResult1Key?.key, 3, 'searchResult1.key');
 
-                await node0.put();
-                await node1.put();
-                await node2.put();
-                await node3.put();
+                const { node: node0P, key: key0P } = node0.putWithKey();
+                const { node: node1P, key: key1P } = node1.putWithKey();
+                const { node: node2P, key: key2P } = node2.putWithKey();
+                const { node: node3P, key: key3P } = node3.putWithKey();
+                await Promise.all([node0P, key0P, node1P, key1P, node2P, key2P, node3P, key3P]);
+
+                assert.equal(IPFSTree._totalNetworkPut, 4, 'IPFSTreeIndex._totalNetworkPut');
+                assert.equal(IPFSTreeIndex._totalNetworkPut, 4, 'IPFSTreeIndex._totalNetworkPut');
 
                 const node0Load = await IPFSTree.createFromCID(await node0.cid());
-                const searchResult2 = await (await node0Load.search(IPFSTree.createLeafWithKey(3, cid))).getKey();
-                assert.equal(searchResult2.key, 3);
+                const searchResult2 = await node0Load.search(IPFSTreeIndex.create(3, cid));
+                const searchResult2Key = await searchResult2?.getKey();
+                assert.equal(searchResult2Key?.key, 3, 'searchResult1.key');
+
+                assert.equal(IPFSTree._totalNetworkGet, 4, 'IPFSTreeIndex._totalNetworkGet');
+                assert.equal(IPFSTreeIndex._totalNetworkGet, 4, 'IPFSTreeIndex._totalNetworkGet');
             });
         });
 

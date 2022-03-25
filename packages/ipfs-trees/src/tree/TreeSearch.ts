@@ -5,33 +5,43 @@ export default abstract class TreeSearch<T extends Comparable<any>> extends Tree
     //Binary search
     //Yields searched nodes to enable cancelling search on timeout
     //Returns undefined if no result match
-    async *searchGenerator(a: TreeSearch<T>): AsyncGenerator<TreeSearch<T>> {
-        yield this;
+    static async *searchGenerator<T extends Comparable<any>>(
+        root: TreeSearch<T> | undefined,
+        a: T,
+    ): AsyncGenerator<TreeSearch<T>> {
+        if (!root) {
+            return;
+        }
 
-        if ((await this.getKey()).equals(await a.getKey())) return;
+        yield root;
+
+        if ((await root.getKey()).equals(a)) return;
 
         //left < root < right
-        if ((await a.getKey()).lt(await this.getKey())) {
-            const leftNode = (await this.getLeft()) as TreeSearch<T>;
-            if (leftNode) {
-                const searchRec = leftNode.searchGenerator(a);
-                yield* searchRec;
-            }
+        if (a.lt(await root.getKey())) {
+            const leftNode = (await root.getLeft()) as TreeSearch<T>;
+            const searchRec = TreeSearch.searchGenerator(leftNode, a);
+            yield* searchRec;
         } else {
-            const rightNode = (await this.getRight()) as TreeSearch<T>;
-            if (rightNode) {
-                const searchRec = rightNode.searchGenerator(a);
-                yield* searchRec;
-            }
+            const rightNode = (await root.getRight()) as TreeSearch<T>;
+            const searchRec = TreeSearch.searchGenerator(rightNode, a);
+            yield* searchRec;
         }
     }
 
-    async search(a: TreeSearch<T>): Promise<TreeSearch<T>> {
+    async *searchGenerator(a: T): AsyncGenerator<TreeSearch<T>> {
+        yield* TreeSearch.searchGenerator(this, a);
+    }
+
+    async search(a: T): Promise<TreeSearch<T> | undefined> {
         const gen = this.searchGenerator(a);
         let n: TreeSearch<T>;
         for await (n of gen) {
+            n = n;
         }
-        return n!;
+        if ((await n!.getKey()).equals(a)) return n!;
+
+        return undefined;
     }
 
     //Inserts and returns root

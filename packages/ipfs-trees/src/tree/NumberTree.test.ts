@@ -31,7 +31,7 @@ describe('NumberTree.test.ts', () => {
 
     describe('search', () => {
         it('root', async () => {
-            const searchResult = await tree.search(NumberTree.createLeafWithKey(3));
+            const searchResult = await tree.search(NumberTreeIndex.create(3));
             const searchResultContent = await searchResult!.getKey();
 
             assert.isTrue(searchResultContent.equals(NumberTreeIndex.create(3)));
@@ -39,7 +39,7 @@ describe('NumberTree.test.ts', () => {
         });
 
         it('leaf', async () => {
-            const searchResult = await tree.search(NumberTree.createLeafWithKey(1));
+            const searchResult = await tree.search(NumberTreeIndex.create(1));
             const searchResultContent = await searchResult!.getKey();
 
             assert.isTrue(searchResultContent.equals(NumberTreeIndex.create(1)));
@@ -47,12 +47,8 @@ describe('NumberTree.test.ts', () => {
         });
 
         it('not found!', async () => {
-            const searchResult = await tree.search(NumberTree.createLeafWithKey(0));
-            const searchResultContent = await searchResult!.getKey();
-            assert.isFalse(searchResultContent.equals(NumberTreeIndex.create(0)));
-            //Leaf node is 1
-            assert.isTrue(searchResultContent.equals(NumberTreeIndex.create(1)));
-            assert.equal(searchResult, node1);
+            const searchResult = await tree.search(NumberTreeIndex.create(0));
+            assert.isUndefined(searchResult);
         });
     });
 

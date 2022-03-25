@@ -22,8 +22,8 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
     //IPFS Client
     private static _ipfs: IPFS;
     //Development Stats
-    private static _totalNetworkGet = 0;
-    private static _totalNetworkPut = 0;
+    static _totalNetworkGet = 0;
+    static _totalNetworkPut = 0;
 
     static setIPFS(ipfs: IPFS) {
         this._ipfs = ipfs;
@@ -69,7 +69,7 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
         return this._encodeCache;
     }
 
-    static async decode(data: ByteView<IPFSTreeIndexData>): Promise<IPFSTreeIndex> {
+    static decode(data: ByteView<IPFSTreeIndexData>): IPFSTreeIndex {
         //Decode
         const { key, valueCID } = decode(data);
         return IPFSTreeIndex.create(key, valueCID);
