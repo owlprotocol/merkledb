@@ -2,6 +2,7 @@ import { CID } from 'multiformats';
 import { assert } from 'chai';
 import { encode, code } from '@ipld/dag-json';
 import { sha256 } from 'multiformats/hashes/sha2';
+import { uniq, sortBy } from 'lodash';
 import IPFSTree from './IPFSTree';
 import IPFSTreeIndex from './IPFSTreeIndex';
 
@@ -96,10 +97,6 @@ describe('IPFSTree.test.ts', () => {
                 tree1 = n as IPFSTree;
             }
             assert.notEqual(tree1!, tree0);
-
-            for await (const n of tree1!.inOrderTraversal()) {
-                console.debug(n);
-            }
 
             //Verify in-order traversal
             const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
@@ -252,11 +249,11 @@ describe('IPFSTree.test.ts', () => {
             assert.deepEqual(valuesInOrder, valuesExpected);
         });
 
-        it('random 100', async () => {
+        it('random 1000', async () => {
             const values = [0];
             const node0 = IPFSTree.createLeafWithKey(0, cid);
             let tree1 = node0;
-            for (let i = 1; i < 100; i++) {
+            for (let i = 1; i < 1000; i++) {
                 const v = Math.ceil(Math.random() * 100);
                 values.push(v);
                 tree1 = (await tree1.insert(IPFSTree.createLeafWithKey(v, cid))) as IPFSTree;
@@ -264,7 +261,7 @@ describe('IPFSTree.test.ts', () => {
 
             //Verify in-order traversal
             const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-            const valuesExpected = values.sort((a, b) => a - b);
+            const valuesExpected = sortBy(uniq(values));
             assert.deepEqual(valuesInOrder, valuesExpected);
         });
     });

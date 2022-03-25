@@ -1,4 +1,5 @@
 import { assert } from 'chai';
+import { uniq, sortBy } from 'lodash';
 import NumberTree from './NumberTree';
 import NumberTreeIndex from './NumberTreeIndex';
 
@@ -231,11 +232,11 @@ describe('NumberTree.test.ts', () => {
             assert.deepEqual(valuesInOrder, valuesExpected);
         });
 
-        it('random 100', async () => {
+        it('random 1000', async () => {
             const values = [0];
             const node0 = NumberTree.createLeafWithKey(0);
             let tree1 = node0;
-            for (let i = 1; i < 100; i++) {
+            for (let i = 1; i < 1000; i++) {
                 const v = Math.ceil(Math.random() * 100);
                 values.push(v);
                 tree1 = (await tree1.insert(NumberTree.createLeafWithKey(v))) as NumberTree;
@@ -243,7 +244,7 @@ describe('NumberTree.test.ts', () => {
 
             //Verify in-order traversal
             const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.v);
-            const valuesExpected = values.sort((a, b) => a - b);
+            const valuesExpected = sortBy(uniq(values));
             assert.deepEqual(valuesInOrder, valuesExpected);
         });
     });
