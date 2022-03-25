@@ -17,6 +17,8 @@ export default class IPFSMerkleIndex {
     readonly rightHash: Digest<18, number> | undefined;
 
     _parent: IPFSMerkleIndex | undefined;
+    _left: IPFSMerkleIndex | undefined;
+    _right: IPFSMerkleIndex | undefined;
 
     //memoization
     private _encodeCache: ByteView<IPFSMerkleIndexData> | undefined;
@@ -70,12 +72,16 @@ export default class IPFSMerkleIndex {
             //[leaf1, null]
             hash = await keccak256.digest(leaf1Hash.digest);
             const n = new IPFSMerkleIndex(hash, leaf1Hash, leaf2Hash);
+            n._parent = leaf1!._parent;
+            n._left = leaf1;
             leaf1!._parent = n;
             return n;
         } else if (leaf1Hash === undefined && leaf2Hash !== undefined) {
             //[leaf2, null]
             hash = await keccak256.digest(leaf2Hash.digest);
             const n = new IPFSMerkleIndex(hash, leaf2Hash, undefined);
+            n._parent = leaf2!._parent;
+            n._left = leaf2;
             leaf2!._parent = n;
             return n;
         } else {
@@ -90,6 +96,10 @@ export default class IPFSMerkleIndex {
                 concat.set(leaf2Bytes, leaf1Bytes.length);
                 hash = await keccak256.digest(concat);
                 const n = new IPFSMerkleIndex(hash, leaf1Hash, leaf2Hash);
+                n._left = leaf1;
+                n._right = leaf2;
+                //if (leaf1?._parent != undefined || leaf2?._parent != undefined)
+                n._parent = undefined;
                 leaf1!._parent = n;
                 leaf2!._parent = n;
                 return n;
@@ -102,11 +112,83 @@ export default class IPFSMerkleIndex {
                 concat.set(leaf1Bytes, leaf2Bytes.length);
                 hash = await keccak256.digest(concat);
                 const n = new IPFSMerkleIndex(hash, leaf2Hash, leaf1Hash);
+                n._parent = undefined;
+                n._left = leaf2;
+                n._right = leaf1;
                 leaf1!._parent = n;
                 leaf2!._parent = n;
                 return n;
             }
         }
+    }
+
+    //Level-order Traversal
+    static *levelOrderTraversal(root: IPFSMerkleIndex): Generator<IPFSMerkleIndex> {
+        const arr: IPFSMerkleIndex[] = [root];
+        while (arr.length > 0) {
+            //FIFO
+            const pop = arr.shift()!;
+            yield pop;
+
+            const leftNode = pop._left;
+            if (leftNode) {
+                arr.push(leftNode);
+            }
+
+            const rightNode = pop._right;
+            if (rightNode) {
+                arr.push(rightNode);
+            }
+        }
+    }
+
+    *levelOrderTraversal(): Generator<IPFSMerkleIndex> {
+        yield* IPFSMerkleIndex.levelOrderTraversal(this);
+    }
+
+    //Inserts and returns root
+    static async *insertGenerator<T>(
+        root: IPFSMerkleIndex | undefined,
+        a: IPFSMerkleIndex,
+    ): AsyncGenerator<IPFSMerkleIndex> {
+        if (!root) {
+            //No root, return self
+            yield a;
+            return;
+        }
+
+        const levelOrderGen = IPFSMerkleIndex.levelOrderTraversal(root);
+
+        for await (const n of levelOrderGen) {
+            const left = n._left;
+            if (left === undefined) {
+                //Set Left Node
+                const newN = await IPFSMerkleIndex.createFromLeaves(n, a);
+                break;
+            } else {
+                const right = n._right;
+                if (right === undefined) {
+                    const newN = await IPFSMerkleIndex.createFromLeaves(n, a);
+                }
+            }
+        }
+    }
+
+    static async insert<T>(root: IPFSMerkleIndex | undefined, a: IPFSMerkleIndex): Promise<IPFSMerkleIndex> {
+        const gen = IPFSMerkleIndex.insertGenerator(root, a);
+        let n: IPFSMerkleIndex;
+        for await (n of gen) {
+            n = n;
+        }
+        return n!;
+    }
+
+    async *insertGenerator(a: IPFSMerkleIndex): AsyncGenerator<IPFSMerkleIndex> {
+        yield* IPFSMerkleIndex.insertGenerator(this, a);
+    }
+
+    async insert(a: IPFSMerkleIndex): Promise<IPFSMerkleIndex> {
+        return IPFSMerkleIndex.insert(this, a);
     }
 
     //Comparisons

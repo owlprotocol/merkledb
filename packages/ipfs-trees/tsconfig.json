@@ -15,7 +15,7 @@
     "resolveJsonModule": true,
     "declaration": true,
     "skipLibCheck": true,
-    "downlevelIteration": false
+    "downlevelIteration": true
   },
   "include": [
     "src"
