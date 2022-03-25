@@ -12,6 +12,7 @@ import {
 } from "../typechain";
 // eslint-disable-next-line node/no-missing-import
 import dndData from "./dndData";
+import { ContractFactory } from "ethers/lib/ethers";
 
 describe("CBOR Decoding", function () {
     this.timeout(60_000);
@@ -21,12 +22,15 @@ describe("CBOR Decoding", function () {
     let CBORTestingFactory: CBORTesting__factory;
     // eslint-disable-next-line camelcase
     let CBORDecodingFactory: CBORDecoding__factory;
+    let ByteParserFactory: ContractFactory;
 
     before(async () => {
         CBORDecodingFactory = await ethers.getContractFactory("CBORDecoding");
+        ByteParserFactory = await ethers.getContractFactory("ByteParser");
         CBORTestingFactory = await ethers.getContractFactory("CBORTesting", {
             libraries: {
                 CBORDecoding: (await CBORDecodingFactory.deploy()).address,
+                ByteParser: (await ByteParserFactory.deploy()).address,
             },
         });
         // Deploy our decoder library
@@ -118,16 +122,16 @@ describe("CBOR Decoding", function () {
         expect(decoded).to.deep.equal(toExpectedValue(character));
     });
 
-    it("Linear Search Decoding", async function () {
-        const decoder = await CBORTestingFactory.deploy();
+    // it("Linear Search Decoding", async function () {
+    //     const decoder = await CBORTestingFactory.deploy();
 
-        const values = cbor.encode({ a: 1, b: 2, c: 3 });
-        // Good call
-        await decoder.testDecodeCBORMappingGetValue(values, toHex("a"));
-        // Bad call
-        const call = decoder.testDecodeCBORMappingGetValue(values, toHex("x"));
-        await expect(call).to.be.revertedWith("Key not found!");
-    });
+    //     const values = cbor.encode({ a: 1, b: 2, c: 3 });
+    //     // Good call
+    //     await decoder.testDecodeCBORMappingGetValue(values, toHex("a"));
+    //     // Bad call
+    //     const call = decoder.testDecodeCBORMappingGetValue(values, toHex("x"));
+    //     await expect(call).to.be.revertedWith("Key not found!");
+    // });
 
     it("Test with game data", async () => {
         const profiles = [

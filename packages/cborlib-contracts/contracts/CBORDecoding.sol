@@ -28,7 +28,7 @@ library CBORDecoding {
      */
     function decodeMapping(
         bytes memory encoding
-    ) public view returns(
+    ) external view returns(
         bytes[2][] memory decodedData
     ) {
         uint cursor = 0;
@@ -54,7 +54,7 @@ library CBORDecoding {
      */
     function decodeArray(
         bytes memory encoding
-    ) public view returns(
+    ) external view returns(
         bytes[] memory decodedData
     ) {
         uint cursor = 0;
@@ -80,7 +80,7 @@ library CBORDecoding {
      */
     function decodePrimitive(
         bytes memory encoding
-    ) public view returns(
+    ) external view returns(
         bytes memory decodedData
     ) {
         uint cursor = 0;
@@ -101,30 +101,30 @@ library CBORDecoding {
      * Helper Functions *
      *******************/
 
-    /**
-     * @dev Performs linear search through data for a key
-     * @param encoding Encoded CBOR bytes data
-     * @param key Ke
-     * @return value Decoded CBOR data as bytes.
-     */
-    function decodeMappingGetValue(
-        bytes memory encoding,
-        bytes memory key
-    ) public view returns(
-        bytes memory value
-    ) {
-        // Ensure we start with a mapping
-        bytes32 keyHash = keccak256(key);
+    // /**
+    //  * @dev Performs linear search through data for a key
+    //  * @param encoding Encoded CBOR bytes data
+    //  * @param key Ke
+    //  * @return value Decoded CBOR data as bytes.
+    //  */
+    // function decodeMappingGetValue(
+    //     bytes memory encoding,
+    //     bytes memory key
+    // ) external view returns(
+    //     bytes memory value
+    // ) {
+    //     // Ensure we start with a mapping
+    //     bytes32 keyHash = keccak256(key);
 
-        // Decode our data
-        bytes[2][] memory decodedData = decodeMapping(encoding);
+    //     // Decode our data
+    //     bytes[2][] memory decodedData = decodeMapping(encoding);
 
-        // Linear Search
-        for (uint keyIdx = 0; keyIdx < decodedData.length; keyIdx++)
-            if (keyHash == keccak256(decodedData[keyIdx][0]))
-                return decodedData[keyIdx][1];
+    //     // Linear Search
+    //     for (uint keyIdx = 0; keyIdx < decodedData.length; keyIdx++)
+    //         if (keyHash == keccak256(decodedData[keyIdx][0]))
+    //             return decodedData[keyIdx][1];
 
-        revert("Key not found!");
-    }
+    //     revert("Key not found!");
+    // }
 
 }
