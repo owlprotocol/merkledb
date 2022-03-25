@@ -7,12 +7,12 @@ import { IPFS } from 'ipfs';
 
 export interface IPFSTreeIndexData {
     key: number;
-    valueCID: CID;
+    valueCID: CID | undefined;
 }
 
 export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
     readonly key: number;
-    readonly valueCID: CID;
+    readonly valueCID: CID | undefined;
 
     //memoization
     private _encodeCache: ByteView<IPFSTreeIndexData> | undefined;
@@ -29,13 +29,13 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
         this._ipfs = ipfs;
     }
 
-    private constructor(key: number, valueCID: CID) {
+    private constructor(key: number, valueCID: CID | undefined) {
         this.key = key;
         this.valueCID = valueCID;
     }
 
     //Factory
-    static create(key: number, valueCID: CID): IPFSTreeIndex {
+    static create(key: number, valueCID: CID | undefined): IPFSTreeIndex {
         return new IPFSTreeIndex(key, valueCID);
     }
 
@@ -54,6 +54,9 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
     gt(a: IPFSTreeIndex): boolean {
         return this.key > a.key;
     }
+    isNullNode(): boolean {
+        return this.valueCID === undefined;
+    }
 
     //IPFS
     encode(): ByteView<IPFSTreeIndexData> {
@@ -62,8 +65,9 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
         //Data
         const data: IPFSTreeIndexData = {
             key: this.key,
-            valueCID: this.valueCID,
+            valueCID: undefined,
         };
+        if (this.valueCID) data.valueCID = this.valueCID;
         //Encode
         this._encodeCache = encode(data);
         return this._encodeCache;
