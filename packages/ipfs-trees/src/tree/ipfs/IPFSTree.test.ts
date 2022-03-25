@@ -360,17 +360,17 @@ describe('IPFSTree.test.ts', () => {
             });
 
             it('sorted 0-100', async () => {
-                const values = [0];
+                const values = ['0'];
                 const node0 = IPFSTree.createLeafWithKey('0', cid);
                 let tree1 = node0;
                 for (let i = 1; i < 100; i++) {
-                    values.push(i);
+                    values.push(`${i}`);
                     tree1 = (await tree1.insert(IPFSTree.createLeafWithKey(`${i}`, cid))) as IPFSTree;
                 }
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = values.map((x) => `${x}`);
+                const valuesExpected = sortBy(values);
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
@@ -382,34 +382,35 @@ describe('IPFSTree.test.ts', () => {
                  *    / \   / \
                  *   0   7 12 20
                  *
+                 *  OUTDATED GRAPH
                  */
-                const values = [10, 5, 15, 0, 7, 20, 12];
+                const values = ['10', '5', '15', '0', '7', '20', '12'];
                 const node0 = IPFSTree.createLeafWithKey('10', cid);
                 let tree1 = node0;
                 for (let i = 1; i < values.length; i++) {
                     const v = values[i];
-                    tree1 = (await tree1.insert(IPFSTree.createLeafWithKey(`${v}`, cid))) as IPFSTree;
+                    tree1 = (await tree1.insert(IPFSTree.createLeafWithKey(v, cid))) as IPFSTree;
                 }
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = values.sort((a, b) => a - b).map((x) => `${x}`);
+                const valuesExpected = sortBy(values);
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
             it('random 1000', async () => {
-                const values = [0];
+                const values = ['0'];
                 const node0 = IPFSTree.createLeafWithKey('0', cid);
                 let tree1 = node0;
                 for (let i = 1; i < 1000; i++) {
                     const v = Math.ceil(Math.random() * 100);
-                    values.push(v);
+                    values.push(`${v}`);
                     tree1 = (await tree1.insert(IPFSTree.createLeafWithKey(`${v}`, cid))) as IPFSTree;
                 }
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = sortBy(uniq(values)).map((x) => `${x}`);
+                const valuesExpected = sortBy(uniq(values));
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
         });

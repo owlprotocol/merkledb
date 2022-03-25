@@ -53,10 +53,10 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
 
     //Implement proper string compare
     lt(a: IPFSTreeIndex): boolean {
-        return parseInt(this.key) < parseInt(a.key);
+        return this.key < a.key;
     }
     gt(a: IPFSTreeIndex): boolean {
-        return parseInt(this.key) > parseInt(a.key);
+        return !this.equals(a) && !this.lt(a);
     }
     isNullNode(): boolean {
         return this.valueCID === undefined;
