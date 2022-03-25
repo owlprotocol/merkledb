@@ -17,7 +17,6 @@ describe('IPFSTree.test.ts', () => {
      *   node2  node4
      *     /
      *  node1
-     *
      */
     let tree: IPFSTree;
     let node1: IPFSTree;

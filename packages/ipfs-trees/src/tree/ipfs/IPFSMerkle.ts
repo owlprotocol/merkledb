@@ -90,22 +90,30 @@ export default class IPFSMerkle extends TreeBalanced<IPFSMerkleIndex> {
         if (!this._key) throw new Error('Node has no key!');
 
         if (key.equals(this._key)) return this;
-        return IPFSMerkle.create(key, this._left, this._right);
+        throw new Error('IPFSMerkle does not support withKey()');
     }
 
+    //Node rotation, insert left
     async withLeft(left: TreeBalanced<IPFSMerkleIndex>) {
         if (!this._key) throw new Error('Node has no key!');
-
         if (left === this._left) return this;
-        const n = IPFSMerkle.create(this._key, left, this._right);
+
+        const leftKey = await left.getKey();
+        const newKey = await IPFSMerkleIndex.createFromLeaves(leftKey, this._key);
+
+        const n = IPFSMerkle.create(newKey, left, this);
         return n;
     }
 
+    //Node rotation, insert right
     async withRight(right: TreeBalanced<IPFSMerkleIndex>) {
         if (!this._key) throw new Error('Node has no key!');
-
         if (right === this._right) return this;
-        const n = IPFSMerkle.create(this._key, this._left, right);
+
+        const rightKey = await right.getKey();
+        const newKey = await IPFSMerkleIndex.createFromLeaves(this._key, rightKey);
+
+        const n = IPFSMerkle.create(newKey, this, right);
         return n;
     }
 

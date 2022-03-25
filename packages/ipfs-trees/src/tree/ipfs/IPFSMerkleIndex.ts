@@ -6,14 +6,14 @@ import { IPFS } from 'ipfs';
 
 export interface IPFSMerkleIndexData {
     hash: Digest<18, number>;
-    leftHashCID: CID | undefined;
-    rightHashCID: CID | undefined;
+    leftHashCID?: CID;
+    rightHashCID?: CID;
 }
 
 export default class IPFSMerkleIndex {
     readonly hash: Digest<18, number>;
-    readonly leftCID: CID | undefined;
-    readonly rightCID: CID | undefined;
+    readonly leftHashCID: CID | undefined;
+    readonly rightHashCID: CID | undefined;
 
     //memoization
     private _encodeCache: ByteView<IPFSMerkleIndexData> | undefined;
@@ -32,8 +32,8 @@ export default class IPFSMerkleIndex {
 
     private constructor(hash: Digest<18, number>, leftCID: CID | undefined, rightCID: CID | undefined) {
         this.hash = hash;
-        this.leftCID = leftCID;
-        this.rightCID = rightCID;
+        this.leftHashCID = leftCID;
+        this.rightHashCID = rightCID;
     }
 
     //Factory
@@ -52,8 +52,6 @@ export default class IPFSMerkleIndex {
         leaf1: IPFSMerkleIndex | undefined,
         leaf2: IPFSMerkleIndex | undefined,
     ): Promise<IPFSMerkleIndex> {
-        const leaf1CID = await leaf1?.cid();
-        const leaf2CID = await leaf2?.cid();
         const leaf1Hash = leaf1?.hash;
         const leaf2Hash = leaf2?.hash;
 
@@ -62,16 +60,18 @@ export default class IPFSMerkleIndex {
         let hash: Digest<18, number>;
         if (leaf1Hash === undefined && leaf2Hash === undefined) throw new Error('Must have 1 leaf');
 
-        if (leaf1Hash !== undefined && leaf2Hash !== undefined) {
+        if (leaf1Hash !== undefined && leaf2Hash === undefined) {
             //[leaf1, null]
             hash = await sha256.digest(leaf1Hash.bytes);
 
-            return IPFSMerkleIndex.create(hash, leaf1CID, undefined);
+            const leaf1HashCID = await leaf1?.cid();
+            return IPFSMerkleIndex.create(hash, leaf1HashCID, undefined);
         } else if (leaf1Hash === undefined && leaf2Hash !== undefined) {
             //[leaf2, null]
             hash = await sha256.digest(leaf2Hash.bytes);
 
-            return IPFSMerkleIndex.create(hash, leaf2CID, undefined);
+            const leaf2HashCID = await leaf2?.cid();
+            return IPFSMerkleIndex.create(hash, leaf2HashCID, undefined);
         } else if (leaf1Hash!.bytes < leaf2Hash!.bytes) {
             //[leaf1, leaf2]
             const leaf1Bytes = leaf1Hash!.bytes;
@@ -81,7 +81,9 @@ export default class IPFSMerkleIndex {
             concat.set(leaf2Bytes, leaf1Bytes.length);
             hash = await sha256.digest(concat);
 
-            return IPFSMerkleIndex.create(hash, leaf1CID, leaf2CID);
+            const leaf1HashCID = await leaf1?.cid();
+            const leaf2HashCID = await leaf2?.cid();
+            return IPFSMerkleIndex.create(hash, leaf1HashCID, leaf2HashCID);
         } else {
             //[leaf2, leaf1]
             const leaf1Bytes = leaf1Hash!.bytes;
@@ -91,16 +93,18 @@ export default class IPFSMerkleIndex {
             concat.set(leaf1Bytes, leaf2Bytes.length);
             hash = await sha256.digest(concat);
 
-            return IPFSMerkleIndex.create(hash, leaf2CID, leaf1CID);
+            const leaf1HashCID = await leaf1?.cid();
+            const leaf2HashCID = await leaf2?.cid();
+            return IPFSMerkleIndex.create(hash, leaf2HashCID, leaf1HashCID);
         }
     }
 
     equals(a: IPFSMerkleIndex): boolean {
         //TODO: Optimize UInt8 comparison
-        return this.hash.bytes.toString() === a.hash.bytes.toString();
+        return this.hash.digest.toString() === a.hash.digest.toString();
     }
     isNullNode(): boolean {
-        return this.leftCID === undefined && this.rightCID == undefined;
+        return this.leftHashCID === undefined && this.rightHashCID == undefined;
     }
 
     //IPFS
@@ -110,11 +114,9 @@ export default class IPFSMerkleIndex {
         //Data
         const data: IPFSMerkleIndexData = {
             hash: this.hash,
-            leftHashCID: undefined,
-            rightHashCID: undefined,
         };
-        if (this.leftCID) data.leftHashCID = this.leftCID;
-        if (this.rightCID) data.rightHashCID = this.rightCID;
+        if (this.leftHashCID) data.leftHashCID = this.leftHashCID;
+        if (this.rightHashCID) data.rightHashCID = this.rightHashCID;
         //Encode
         this._encodeCache = encode(data);
         return this._encodeCache;
