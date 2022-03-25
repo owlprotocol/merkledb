@@ -28,11 +28,12 @@ library CBORDataStructures {
         bytes[2][] memory decodedMapping
     ) {
         // Track our mapping start
-        uint mappingCursor = cursor + 1;
+        uint256 mappingCursor = cursor + 1;
 
-        // Count up how many keys we have
-        (uint totalItems, , ) = getDataStructureItemLength(encoding, mappingCursor, Spec.MajorType.Map, shortCount);
+        // Count up how many keys we have, set cursor
+        (uint totalItems, uint dataStart, ) = getDataStructureItemLength(encoding, mappingCursor, Spec.MajorType.Map, shortCount);
         require(totalItems % 2 == 0, "Invalid mapping provided!");
+        // mappingCursor = dataStart;
 
         // Allocate new array
         decodedMapping = new bytes[2][](totalItems / 2);
@@ -75,13 +76,14 @@ library CBORDataStructures {
         // Track our array start
         uint arrayCursor = cursor + 1;
 
-        // Count up how many keys we have
-        (uint totalItems, , ) = getDataStructureItemLength(encoding, arrayCursor, Spec.MajorType.Array, shortCount);
+        // Count up how many keys we have, set cursor
+        (uint totalItems, uint dataStart, ) = getDataStructureItemLength(encoding, arrayCursor, Spec.MajorType.Array, shortCount);
+        // arrayCursor = dataStart;
 
         // Allocate new array
         decodedArray = new bytes[](totalItems);
 
-        // Pull out our data
+        // Position cursor and Pull out our data
         for (uint item = 0; item < totalItems; item++) {
 
             // See what our field looks like
@@ -172,7 +174,6 @@ library CBORDataStructures {
         if (shortCount == 31) {
             // Indefinite count
             // Loop through our indefinite-length structure until break marker.
-            // TODO - this could break?
             (totalItems, dataEnd) = Utils.scanIndefiniteItems(encoding, cursor + 1, 0);
             // Data starts right where count ends (which is cursor+1)
             dataStart = countEnd;

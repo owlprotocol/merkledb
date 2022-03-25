@@ -92,13 +92,21 @@ describe("CBOR Decoding", function () {
         expect(decoded).to.deep.equal(toExpectedValue(myMapping));
     });
 
-    it("Nested array", async function () {
-        const myMapping = [[1, 2, [3], 4]];
+    it("Long array decoding", async function () {
+        const myMapping = [];
+        for (let x = 0; x < 50; x++) myMapping.push(x);
         const decoded = await decoder.testDecodeCBORArray(
             cbor.encode(myMapping)
         );
-        // Assert keys equal
+        // Assert all keys are equal
         expect(decoded).to.deep.equal(toExpectedValue(myMapping));
+    });
+
+    it("Nested array", async function () {
+        const myArray = [[1, 2, [3], 4]];
+        const decoded = await decoder.testDecodeCBORArray(cbor.encode(myArray));
+        // Assert keys equal
+        expect(decoded).to.deep.equal(toExpectedValue(myArray));
     });
 
     it("Nested mapping", async function () {
@@ -107,6 +115,17 @@ describe("CBOR Decoding", function () {
             cbor.encode(myMapping)
         );
         // Assert keys equal
+        expect(decoded).to.deep.equal(toExpectedValue(myMapping));
+    });
+
+    it.skip("Long mapping decoding", async function () {
+        const myMapping = {};
+        // @ts-ignore
+        for (let x = 0; x < 11; x++) myMapping[x] = { value: x };
+        const decoded = await decoder.testDecodeCBORMapping(
+            cbor.encode(myMapping)
+        );
+        // Assert all keys are equal
         expect(decoded).to.deep.equal(toExpectedValue(myMapping));
     });
 
