@@ -1,19 +1,22 @@
 import { CID } from 'multiformats';
 import { ByteView, encode, decode, code } from '@ipld/dag-json';
-import { sha256 } from 'multiformats/hashes/sha2';
+//@ts-expect-error
+import { keccak256 } from '@multiformats/sha3';
 import { Digest } from 'multiformats/hashes/digest';
 import { IPFS } from 'ipfs';
 
 export interface IPFSMerkleIndexData {
     hash: Digest<18, number>;
-    leftHashCID?: CID;
-    rightHashCID?: CID;
+    leftHash?: Digest<18, number> | undefined;
+    rightHash?: Digest<18, number> | undefined;
 }
 
 export default class IPFSMerkleIndex {
     readonly hash: Digest<18, number>;
-    readonly leftHashCID: CID | undefined;
-    readonly rightHashCID: CID | undefined;
+    readonly leftHash: Digest<18, number> | undefined;
+    readonly rightHash: Digest<18, number> | undefined;
+
+    _parent: IPFSMerkleIndex | undefined;
 
     //memoization
     private _encodeCache: ByteView<IPFSMerkleIndexData> | undefined;
@@ -30,21 +33,25 @@ export default class IPFSMerkleIndex {
         this._ipfs = ipfs;
     }
 
-    private constructor(hash: Digest<18, number>, leftCID: CID | undefined, rightCID: CID | undefined) {
+    private constructor(
+        hash: Digest<18, number>,
+        leftHash: Digest<18, number> | undefined,
+        rightHash: Digest<18, number> | undefined,
+    ) {
         this.hash = hash;
-        this.leftHashCID = leftCID;
-        this.rightHashCID = rightCID;
+        this.leftHash = leftHash;
+        this.rightHash = rightHash;
     }
 
     //Factory
-    static create(hash: Digest<18, number>, leftCID: CID | undefined, rightCID: CID | undefined): IPFSMerkleIndex {
-        return new IPFSMerkleIndex(hash, leftCID, rightCID);
-    }
-
     static async createFromCID(cid: CID): Promise<IPFSMerkleIndex> {
         this._totalNetworkGet += 1;
         const data = await this._ipfs.block.get(cid);
         return IPFSMerkleIndex.decode(data);
+    }
+
+    static async createLeaf(hash: Digest<18, number>) {
+        return new IPFSMerkleIndex(hash, undefined, undefined);
     }
 
     //May be sorted for consistency
@@ -54,57 +61,61 @@ export default class IPFSMerkleIndex {
     ): Promise<IPFSMerkleIndex> {
         const leaf1Hash = leaf1?.hash;
         const leaf2Hash = leaf2?.hash;
-
-        //TODO: Replace with keccak256
+        //TODO: Remove mutation in favor of returning copies
         //TODO: Verify against ethereum implementation
         let hash: Digest<18, number>;
         if (leaf1Hash === undefined && leaf2Hash === undefined) throw new Error('Must have 1 leaf');
 
         if (leaf1Hash !== undefined && leaf2Hash === undefined) {
             //[leaf1, null]
-            hash = await sha256.digest(leaf1Hash.bytes);
-
-            const leaf1HashCID = await leaf1?.cid();
-            return IPFSMerkleIndex.create(hash, leaf1HashCID, undefined);
+            hash = await keccak256.digest(leaf1Hash.digest);
+            const n = new IPFSMerkleIndex(hash, leaf1Hash, leaf2Hash);
+            leaf1!._parent = n;
+            return n;
         } else if (leaf1Hash === undefined && leaf2Hash !== undefined) {
             //[leaf2, null]
-            hash = await sha256.digest(leaf2Hash.bytes);
-
-            const leaf2HashCID = await leaf2?.cid();
-            return IPFSMerkleIndex.create(hash, leaf2HashCID, undefined);
-        } else if (leaf1Hash!.bytes < leaf2Hash!.bytes) {
-            //[leaf1, leaf2]
-            const leaf1Bytes = leaf1Hash!.bytes;
-            const leaf2Bytes = leaf2Hash!.bytes;
-            const concat = new Uint8Array(leaf1Bytes.length + leaf2Bytes.length);
-            concat.set(leaf1Bytes);
-            concat.set(leaf2Bytes, leaf1Bytes.length);
-            hash = await sha256.digest(concat);
-
-            const leaf1HashCID = await leaf1?.cid();
-            const leaf2HashCID = await leaf2?.cid();
-            return IPFSMerkleIndex.create(hash, leaf1HashCID, leaf2HashCID);
+            hash = await keccak256.digest(leaf2Hash.digest);
+            const n = new IPFSMerkleIndex(hash, leaf2Hash, undefined);
+            leaf2!._parent = n;
+            return n;
         } else {
-            //[leaf2, leaf1]
-            const leaf1Bytes = leaf1Hash!.bytes;
-            const leaf2Bytes = leaf2Hash!.bytes;
-            const concat = new Uint8Array(leaf1Bytes.length + leaf2Bytes.length);
-            concat.set(leaf2Bytes);
-            concat.set(leaf1Bytes, leaf2Bytes.length);
-            hash = await sha256.digest(concat);
-
-            const leaf1HashCID = await leaf1?.cid();
-            const leaf2HashCID = await leaf2?.cid();
-            return IPFSMerkleIndex.create(hash, leaf2HashCID, leaf1HashCID);
+            //Both defined, compare
+            const cmp = Buffer.from(leaf1Hash!.digest).compare(Buffer.from(leaf2Hash!.digest));
+            if (cmp < 0) {
+                //[leaf1, leaf2]
+                const leaf1Bytes = leaf1Hash!.digest;
+                const leaf2Bytes = leaf2Hash!.digest;
+                const concat = new Uint8Array(leaf1Bytes.length + leaf2Bytes.length);
+                concat.set(leaf1Bytes);
+                concat.set(leaf2Bytes, leaf1Bytes.length);
+                hash = await keccak256.digest(concat);
+                const n = new IPFSMerkleIndex(hash, leaf1Hash, leaf2Hash);
+                leaf1!._parent = n;
+                leaf2!._parent = n;
+                return n;
+            } else {
+                //[leaf2, leaf1]
+                const leaf1Bytes = leaf1Hash!.digest;
+                const leaf2Bytes = leaf2Hash!.digest;
+                const concat = new Uint8Array(leaf1Bytes.length + leaf2Bytes.length);
+                concat.set(leaf2Bytes);
+                concat.set(leaf1Bytes, leaf2Bytes.length);
+                hash = await keccak256.digest(concat);
+                const n = new IPFSMerkleIndex(hash, leaf2Hash, leaf1Hash);
+                leaf1!._parent = n;
+                leaf2!._parent = n;
+                return n;
+            }
         }
     }
 
+    //Comparisons
     equals(a: IPFSMerkleIndex): boolean {
         //TODO: Optimize UInt8 comparison
         return this.hash.digest.toString() === a.hash.digest.toString();
     }
     isNullNode(): boolean {
-        return this.leftHashCID === undefined && this.rightHashCID == undefined;
+        return this.leftHash === undefined && this.rightHash == undefined;
     }
     toHex(): string {
         return Buffer.from(this.hash.digest.buffer).toString('hex');
@@ -118,8 +129,8 @@ export default class IPFSMerkleIndex {
         const data: IPFSMerkleIndexData = {
             hash: this.hash,
         };
-        if (this.leftHashCID) data.leftHashCID = this.leftHashCID;
-        if (this.rightHashCID) data.rightHashCID = this.rightHashCID;
+        if (this.leftHash) data.leftHash = this.leftHash;
+        if (this.rightHash) data.rightHash = this.rightHash;
         //Encode
         this._encodeCache = encode(data);
         return this._encodeCache;
@@ -127,14 +138,14 @@ export default class IPFSMerkleIndex {
 
     static decode(data: ByteView<IPFSMerkleIndexData>): IPFSMerkleIndex {
         //Decode
-        const { hash, leftHashCID: leftCID, rightHashCID: rightCID } = decode(data);
-        return IPFSMerkleIndex.create(hash, leftCID, rightCID);
+        const { hash, leftHash, rightHash } = decode(data);
+        return new IPFSMerkleIndex(hash, leftHash, rightHash);
     }
 
     async digest(): Promise<Digest<18, number>> {
         if (this._digestCache) return this._digestCache;
-        this._digestCache = await sha256.digest(this.encode());
-        return this._digestCache;
+        this._digestCache = await keccak256.digest(this.encode());
+        return this._digestCache!;
     }
 
     async cid(): Promise<CID> {
