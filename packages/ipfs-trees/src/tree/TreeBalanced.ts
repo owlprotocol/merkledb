@@ -12,21 +12,21 @@ export default abstract class TreeBalanced<T> extends Tree<T> {
             return;
         }
 
-        const depthFirstGen = TreeBalanced.levelOrderTraversal(root);
+        const levelOrderGen = TreeBalanced.levelOrderTraversal(root);
 
-        for await (const n of depthFirstGen) {
+        for await (const n of levelOrderGen) {
             const left = await n.getLeft();
-            const right = await n.getRight();
             if (left === undefined) {
                 //Set Left Node
                 yield (await n.withLeft(a)) as TreeBalanced<T>;
                 break;
-            } else if (right === undefined) {
-                //Set Right Node
-                yield (await n.withRight(a)) as TreeBalanced<T>;
-                break;
             } else {
-                //Do Nothing
+                const right = await n.getRight();
+                if (right === undefined) {
+                    //Set Right Node
+                    yield (await n.withRight(a)) as TreeBalanced<T>;
+                    break;
+                }
             }
         }
     }
