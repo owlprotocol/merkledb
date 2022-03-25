@@ -85,11 +85,27 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
         return n;
     }
 
+    /*
+    withLeftLeaf(key: number, valueCID: CID) {
+        const left = IPFSTree.createLeafWithKey(key, valueCID);
+        const n = IPFSTree.create(this.key, left, this.right);
+        return n;
+    }
+    */
+
     withRight(right: TreeSearch<IPFSTreeIndex>) {
         if (right === this.right) return this;
         const n = IPFSTree.create(this.key, this.left, right);
         return n;
     }
+
+    /*
+    withRightLeaf(key: number, valueCID: CID) {
+        const right = IPFSTree.createLeafWithKey(key, valueCID);
+        const n = IPFSTree.create(this.key, this.left, right);
+        return n;
+    }
+    */
 
     //Create with CID
     /*
@@ -141,7 +157,8 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
         if (this.leftCID) data.leftCID = this.leftCID;
         if (this.rightCID) data.rightCID = this.rightCID;
         //Encode
-        return encode(data);
+        this._encodeCache = encode(data);
+        return this._encodeCache;
     }
 
     static async decode(data: ByteView<IPFSTreeData>): Promise<IPFSTree> {
@@ -162,13 +179,15 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
 
     async digest(): Promise<Digest<18, number>> {
         if (this._digestCache) return this._digestCache;
-        return sha256.digest(await this.encode());
+        this._digestCache = await sha256.digest(await this.encode());
+        return this._digestCache;
     }
 
     async cid(): Promise<CID> {
         if (this._cidCache) return this._cidCache;
         const hash = await this.digest();
-        return CID.create(1, code, hash);
+        this._cidCache = CID.create(1, code, hash);
+        return this._cidCache;
     }
 
     async put(): Promise<CID> {

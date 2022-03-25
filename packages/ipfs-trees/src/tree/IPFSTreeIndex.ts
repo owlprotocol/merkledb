@@ -65,7 +65,8 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
             valueCID: this.valueCID,
         };
         //Encode
-        return encode(data);
+        this._encodeCache = encode(data);
+        return this._encodeCache;
     }
 
     static async decode(data: ByteView<IPFSTreeIndexData>): Promise<IPFSTreeIndex> {
@@ -76,13 +77,15 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
 
     async digest(): Promise<Digest<18, number>> {
         if (this._digestCache) return this._digestCache;
-        return sha256.digest(this.encode());
+        this._digestCache = await sha256.digest(this.encode());
+        return this._digestCache;
     }
 
     async cid(): Promise<CID> {
         if (this._cidCache) return this._cidCache;
         const hash = await this.digest();
-        return CID.create(1, code, hash);
+        this._cidCache = CID.create(1, code, hash);
+        return this._cidCache;
     }
 
     async put(): Promise<CID> {
