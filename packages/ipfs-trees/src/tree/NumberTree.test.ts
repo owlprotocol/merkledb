@@ -1,5 +1,6 @@
 import { assert } from 'chai';
-import { uniq, sortBy } from 'lodash';
+import { uniq, sortBy, zip } from 'lodash';
+import asyncGeneratorToArray from '../utils/asyncGeneratorToArray';
 import NumberTree from './NumberTree';
 import NumberTreeIndex from './NumberTreeIndex';
 
@@ -27,6 +28,16 @@ describe('NumberTree.test.ts', () => {
         node2 = await NumberTree.createWithKey(2, node1, undefined);
         node3 = await NumberTree.createWithKey(3, node2, node4);
         tree = node3;
+    });
+
+    describe('traversal', () => {
+        it('levelOrderTraversal', async () => {
+            const traversal = (await tree.getKeysLevelOrder()).map((k) => {
+                return k.v;
+            });
+            const expectedTraversal = [3, 2, 4, 1];
+            assert.deepEqual(traversal, expectedTraversal);
+        });
     });
 
     describe('search', () => {

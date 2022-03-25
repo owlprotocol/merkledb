@@ -47,10 +47,11 @@ export default abstract class Tree<T> implements TreeInterface<T> {
         yield* Tree.postOrderTraversal(this);
     }
 
-    //Left, Right, Root
-    async *depthFirstTraversal(): AsyncGenerator<TreeInterface<T>> {
-        const arr: TreeInterface<T>[] = [this];
+    //Depth First Traversal
+    static async *depthFirstTraversal<T>(root: TreeInterface<T>): AsyncGenerator<TreeInterface<T>> {
+        const arr: TreeInterface<T>[] = [root];
         while (arr.length > 0) {
+            //LIFO
             const pop = arr.pop()!;
             yield pop;
 
@@ -66,9 +67,47 @@ export default abstract class Tree<T> implements TreeInterface<T> {
         }
     }
 
+    async *depthFirstTraversal(): AsyncGenerator<TreeInterface<T>> {
+        yield* Tree.depthFirstTraversal(this);
+    }
+
+    //Level-order Traversal
+    static async *levelOrderTraversal<T>(root: TreeInterface<T>): AsyncGenerator<TreeInterface<T>> {
+        const arr: TreeInterface<T>[] = [root];
+        while (arr.length > 0) {
+            //FIFO
+            const pop = arr.shift()!;
+            yield pop;
+
+            const leftNode = await pop.getLeft();
+            if (leftNode) {
+                arr.push(leftNode);
+            }
+
+            const rightNode = await pop.getRight();
+            if (rightNode) {
+                arr.push(rightNode);
+            }
+        }
+    }
+
+    async *levelOrderTraversal(): AsyncGenerator<TreeInterface<T>> {
+        yield* Tree.levelOrderTraversal(this);
+    }
+
+    //Iterate Keys
     async getKeysInOrder(): Promise<T[]> {
         const promises: Promise<T>[] = [];
         for await (const c of this.inOrderTraversal()) {
+            promises.push(c.getKey());
+        }
+
+        return Promise.all(promises);
+    }
+
+    async getKeysLevelOrder(): Promise<T[]> {
+        const promises: Promise<T>[] = [];
+        for await (const c of this.levelOrderTraversal()) {
             promises.push(c.getKey());
         }
 
