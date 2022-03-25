@@ -6,12 +6,12 @@ import { Digest } from 'multiformats/hashes/digest';
 import { IPFS } from 'ipfs';
 
 export interface IPFSTreeIndexData {
-    key: number;
+    key: string;
     valueCID: CID | undefined;
 }
 
 export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
-    readonly key: number;
+    readonly key: string;
     readonly valueCID: CID | undefined;
 
     //memoization
@@ -29,13 +29,15 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
         this._ipfs = ipfs;
     }
 
-    private constructor(key: number, valueCID: CID | undefined) {
-        this.key = key;
+    private constructor(key: string | number, valueCID: CID | undefined) {
+        if (typeof key === 'number') this.key = `${key}`;
+        else this.key = key;
+
         this.valueCID = valueCID;
     }
 
     //Factory
-    static create(key: number, valueCID: CID | undefined): IPFSTreeIndex {
+    static create(key: number | string, valueCID: CID | undefined): IPFSTreeIndex {
         return new IPFSTreeIndex(key, valueCID);
     }
 

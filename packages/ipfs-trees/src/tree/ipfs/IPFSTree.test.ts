@@ -50,7 +50,7 @@ describe('IPFSTree.test.ts', () => {
         it('getKey()', async () => {
             const node0 = IPFSTree.createLeafWithKey(0, cid);
             const key = await node0.getKey();
-            assert.equal(key.key, 0);
+            assert.equal(key.key, '0');
             assert.equal(key.valueCID, cid);
         });
 
@@ -59,7 +59,7 @@ describe('IPFSTree.test.ts', () => {
             const node1 = await node0.withKey(IPFSTreeIndex.create(1, cid));
 
             const key = await node1.getKey();
-            assert.equal(key.key, 1);
+            assert.equal(key.key, '1');
             assert.equal(key.valueCID, cid);
 
             assert.notEqual(node1, node0);
@@ -199,7 +199,7 @@ describe('IPFSTree.test.ts', () => {
                 const node0 = await IPFSTree.createLeafWithKey(0, cid).withRight(node1);
                 const searchResult1 = await node0.search(IPFSTreeIndex.create(3, cid));
                 const searchResult1Key = await searchResult1?.getKey();
-                assert.equal(searchResult1Key?.key, 3, 'searchResult1.key');
+                assert.equal(searchResult1Key?.key, '3', 'searchResult1.key');
 
                 const { node: node0P, key: key0P } = node0.putWithKey();
                 const { node: node1P, key: key1P } = node1.putWithKey();
@@ -213,7 +213,7 @@ describe('IPFSTree.test.ts', () => {
                 const node0Load = await IPFSTree.createFromCID(await node0.cid());
                 const searchResult2 = await node0Load.search(IPFSTreeIndex.create(3, cid));
                 const searchResult2Key = await searchResult2?.getKey();
-                assert.equal(searchResult2Key?.key, 3, 'searchResult1.key');
+                assert.equal(searchResult2Key?.key, '3', 'searchResult1.key');
 
                 assert.equal(IPFSTree._totalNetworkGet, 4, 'IPFSTreeIndex._totalNetworkGet');
                 assert.equal(IPFSTreeIndex._totalNetworkGet, 4, 'IPFSTreeIndex._totalNetworkGet');
@@ -232,7 +232,7 @@ describe('IPFSTree.test.ts', () => {
                 assert.equal(tree1!, node0);
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [0];
+                const valuesExpected = ['0'];
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
@@ -248,7 +248,7 @@ describe('IPFSTree.test.ts', () => {
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [0, 1];
+                const valuesExpected = ['0', '1'];
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
@@ -275,7 +275,7 @@ describe('IPFSTree.test.ts', () => {
                 assert.notEqual(tree1!, tree0);
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [0, 1, 2, 3];
+                const valuesExpected = [0, 1, 2, 3].map((x) => `${x}`);
                 assert.deepEqual(valuesInOrder, valuesExpected);
                 //Verify non-mutation
                 const tree0InOrder = tree0.inOrderTraversal();
@@ -314,7 +314,7 @@ describe('IPFSTree.test.ts', () => {
                 assert.notEqual(tree1!, tree0);
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [0, 1, 2, 3];
+                const valuesExpected = [0, 1, 2, 3].map((x) => `${x}`);
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
@@ -327,7 +327,7 @@ describe('IPFSTree.test.ts', () => {
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [0, 1, 2, 3, 4];
+                const valuesExpected = [0, 1, 2, 3, 4].map((x) => `${x}`);
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
@@ -340,7 +340,7 @@ describe('IPFSTree.test.ts', () => {
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [1, 2, 3, 4, 5];
+                const valuesExpected = [1, 2, 3, 4, 5].map((x) => `${x}`);
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
@@ -353,7 +353,7 @@ describe('IPFSTree.test.ts', () => {
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [1, 2, 3, 4];
+                const valuesExpected = [1, 2, 3, 4].map((x) => `${x}`);
                 assert.deepEqual(valuesInOrder, valuesExpected);
                 //Reference un-changed
                 assert.equal(tree1, tree, 'reference changed despite no mutation');
@@ -370,7 +370,7 @@ describe('IPFSTree.test.ts', () => {
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = values;
+                const valuesExpected = values.map((x) => `${x}`);
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
@@ -393,7 +393,7 @@ describe('IPFSTree.test.ts', () => {
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = values.sort((a, b) => a - b);
+                const valuesExpected = values.sort((a, b) => a - b).map((x) => `${x}`);
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
@@ -409,7 +409,7 @@ describe('IPFSTree.test.ts', () => {
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = sortBy(uniq(values));
+                const valuesExpected = sortBy(uniq(values)).map((x) => `${x}`);
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
         });
