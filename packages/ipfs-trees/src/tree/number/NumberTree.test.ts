@@ -105,8 +105,8 @@ describe('NumberTree.test.ts', () => {
              *           insert(node3)
              */
             const node2 = NumberTree.createLeafWithKey(2);
-            const node1 = NumberTree.createLeafWithKey(1).withRight(node2);
-            const node0 = NumberTree.createLeafWithKey(0).withRight(node1);
+            const node1 = await NumberTree.createLeafWithKey(1).withRight(node2);
+            const node0 = await NumberTree.createLeafWithKey(0).withRight(node1);
 
             const node3 = NumberTree.createLeafWithKey(3);
             const tree0 = node0;
@@ -144,8 +144,8 @@ describe('NumberTree.test.ts', () => {
              *     insert(node2)
              */
             const node3 = NumberTree.createLeafWithKey(3);
-            const node1 = NumberTree.createLeafWithKey(1).withRight(node3);
-            const node0 = NumberTree.createLeafWithKey(0).withRight(node1);
+            const node1 = await NumberTree.createLeafWithKey(1).withRight(node3);
+            const node0 = await NumberTree.createLeafWithKey(0).withRight(node1);
 
             const node2 = NumberTree.createLeafWithKey(2);
             const tree0 = node0;

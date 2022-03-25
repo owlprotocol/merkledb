@@ -44,18 +44,18 @@ export default class NumberTree extends TreeSearch<NumberTreeIndex> {
         return this.createWithKey(key, undefined, undefined);
     }
 
-    withKey(key: NumberTreeIndex) {
+    async withKey(key: NumberTreeIndex) {
         if (key.equals(this.key)) return this;
         return NumberTree.create(key, this.left, this.right);
     }
 
-    withLeft(left: TreeSearch<NumberTreeIndex>) {
+    async withLeft(left: TreeSearch<NumberTreeIndex>) {
         if (left === this.left) return this;
         const n = NumberTree.create(this.key, left, this.right);
         return n;
     }
 
-    withRight(right: TreeSearch<NumberTreeIndex>) {
+    async withRight(right: TreeSearch<NumberTreeIndex>) {
         if (right === this.right) return this;
         const n = NumberTree.create(this.key, this.left, right);
         return n;

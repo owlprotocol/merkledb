@@ -4,9 +4,9 @@ export default abstract class Tree<T> implements TreeInterface<T> {
     abstract getKey(): Promise<T>;
     abstract getLeft(): Promise<TreeInterface<T> | undefined>;
     abstract getRight(): Promise<TreeInterface<T> | undefined>;
-    abstract withKey(key: T): TreeInterface<T>;
-    abstract withLeft(left: TreeInterface<T>): TreeInterface<T>;
-    abstract withRight(right: TreeInterface<T>): TreeInterface<T>;
+    abstract withKey(key: T): Promise<TreeInterface<T>>;
+    abstract withLeft(left: TreeInterface<T>): Promise<TreeInterface<T>>;
+    abstract withRight(right: TreeInterface<T>): Promise<TreeInterface<T>>;
 
     //Left, Root, Right
     static async *inOrderTraversal<T>(root: TreeInterface<T> | undefined): AsyncGenerator<TreeInterface<T>> {

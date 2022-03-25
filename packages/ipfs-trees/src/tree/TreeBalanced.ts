@@ -19,11 +19,11 @@ export default abstract class TreeBalanced<T> extends Tree<T> {
             const right = await n.getRight();
             if (left === undefined) {
                 //Set Left Node
-                yield n.withLeft(a) as TreeBalanced<T>;
+                yield (await n.withLeft(a)) as TreeBalanced<T>;
                 break;
             } else if (right === undefined) {
                 //Set Right Node
-                yield n.withRight(a) as TreeBalanced<T>;
+                yield (await n.withRight(a)) as TreeBalanced<T>;
                 break;
             } else {
                 //Do Nothing

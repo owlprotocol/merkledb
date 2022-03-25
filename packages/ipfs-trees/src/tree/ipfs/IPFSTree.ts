@@ -85,14 +85,14 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
         return this.createWithKey(key, valueCID, undefined, undefined);
     }
 
-    withKey(key: IPFSTreeIndex) {
+    async withKey(key: IPFSTreeIndex) {
         if (!this._key) throw new Error('Node has no key!');
 
         if (key.equals(this._key)) return this;
         return IPFSTree.create(key, this._left, this._right);
     }
 
-    withLeft(left: TreeSearch<IPFSTreeIndex>) {
+    async withLeft(left: TreeSearch<IPFSTreeIndex>) {
         if (!this._key) throw new Error('Node has no key!');
 
         if (left === this._left) return this;
@@ -100,7 +100,7 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
         return n;
     }
 
-    withRight(right: TreeSearch<IPFSTreeIndex>) {
+    async withRight(right: TreeSearch<IPFSTreeIndex>) {
         if (!this._key) throw new Error('Node has no key!');
 
         if (right === this._right) return this;

@@ -69,7 +69,7 @@ export default abstract class TreeSearch<T extends Comparable<any>> extends Tree
                 n = n;
                 yield n;
             }
-            yield root.withLeft(n!) as TreeSearch<T>;
+            yield (await root.withLeft(n!)) as TreeSearch<T>;
         } else {
             const rightNode = (await root.getRight()) as TreeSearch<T> | undefined;
             const gen = TreeSearch.insertGenerator(rightNode, a);
@@ -78,7 +78,7 @@ export default abstract class TreeSearch<T extends Comparable<any>> extends Tree
                 n = n;
                 yield n;
             }
-            yield root.withRight(n!) as TreeSearch<T>;
+            yield (await root.withRight(n!)) as TreeSearch<T>;
         }
     }
 

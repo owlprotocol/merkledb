@@ -44,18 +44,18 @@ export default class NumberTreeBalanced extends TreeBalanced<NumberTreeIndex> {
         return this.createWithKey(key, undefined, undefined);
     }
 
-    withKey(key: NumberTreeIndex) {
+    async withKey(key: NumberTreeIndex) {
         if (key.equals(this.key)) return this;
         return NumberTreeBalanced.create(key, this.left, this.right);
     }
 
-    withLeft(left: TreeBalanced<NumberTreeIndex>) {
+    async withLeft(left: TreeBalanced<NumberTreeIndex>) {
         if (left === this.left) return this;
         const n = NumberTreeBalanced.create(this.key, left, this.right);
         return n;
     }
 
-    withRight(right: TreeBalanced<NumberTreeIndex>) {
+    async withRight(right: TreeBalanced<NumberTreeIndex>) {
         if (right === this.right) return this;
         const n = NumberTreeBalanced.create(this.key, this.left, right);
         return n;

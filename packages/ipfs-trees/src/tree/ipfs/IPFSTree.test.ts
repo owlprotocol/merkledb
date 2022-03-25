@@ -38,8 +38,8 @@ describe('IPFSTree.test.ts', () => {
 
     beforeEach(async () => {
         //Leaves
-        node1 = IPFSTree.createLeafWithKey(1, cid);
-        node4 = IPFSTree.createLeafWithKey(4, cid);
+        node1 = await IPFSTree.createLeafWithKey(1, cid);
+        node4 = await IPFSTree.createLeafWithKey(4, cid);
 
         //Nodes
         node2 = await IPFSTree.createWithKey(2, cid, node1, undefined);
@@ -56,8 +56,8 @@ describe('IPFSTree.test.ts', () => {
         });
 
         it('withKey()', async () => {
-            const node0 = IPFSTree.createLeafWithKey(0, cid);
-            const node1 = node0.withKey(IPFSTreeIndex.create(1, cid));
+            const node0 = await IPFSTree.createLeafWithKey(0, cid);
+            const node1 = await node0.withKey(IPFSTreeIndex.create(1, cid));
 
             const key = await node1.getKey();
             assert.equal(key.key, 1);
@@ -69,8 +69,8 @@ describe('IPFSTree.test.ts', () => {
 
         it('withLeft()', async () => {
             const node0 = IPFSTree.createLeafWithKey(0, cid);
-            const node1 = node0.withKey(IPFSTreeIndex.create(1, cid));
-            const node0v2 = node0.withLeft(node1);
+            const node1 = await node0.withKey(IPFSTreeIndex.create(1, cid));
+            const node0v2 = await node0.withLeft(node1);
 
             const key0 = await node0.getKey();
             const key0v2 = await node0v2.getKey();
@@ -195,9 +195,9 @@ describe('IPFSTree.test.ts', () => {
                  *             node3
                  */
                 const node3 = IPFSTree.createLeafWithKey(3, cid);
-                const node2 = IPFSTree.createLeafWithKey(2, cid).withRight(node3);
-                const node1 = IPFSTree.createLeafWithKey(1, cid).withRight(node2);
-                const node0 = IPFSTree.createLeafWithKey(0, cid).withRight(node1);
+                const node2 = await IPFSTree.createLeafWithKey(2, cid).withRight(node3);
+                const node1 = await IPFSTree.createLeafWithKey(1, cid).withRight(node2);
+                const node0 = await IPFSTree.createLeafWithKey(0, cid).withRight(node1);
                 const searchResult1 = await node0.search(IPFSTreeIndex.create(3, cid));
                 const searchResult1Key = await searchResult1?.getKey();
                 assert.equal(searchResult1Key?.key, 3, 'searchResult1.key');
@@ -263,9 +263,9 @@ describe('IPFSTree.test.ts', () => {
                  *             \
                  *           insert(node3)
                  */
-                const node2 = IPFSTree.createLeafWithKey(2, cid);
-                const node1 = IPFSTree.createLeafWithKey(1, cid).withRight(node2);
-                const node0 = IPFSTree.createLeafWithKey(0, cid).withRight(node1);
+                const node2 = await IPFSTree.createLeafWithKey(2, cid);
+                const node1 = await IPFSTree.createLeafWithKey(1, cid).withRight(node2);
+                const node0 = await IPFSTree.createLeafWithKey(0, cid).withRight(node1);
 
                 const node3 = IPFSTree.createLeafWithKey(3, cid);
                 const tree0 = node0;
@@ -302,9 +302,9 @@ describe('IPFSTree.test.ts', () => {
                  *            /
                  *     insert(node2)
                  */
-                const node3 = IPFSTree.createLeafWithKey(3, cid);
-                const node1 = IPFSTree.createLeafWithKey(1, cid).withRight(node3);
-                const node0 = IPFSTree.createLeafWithKey(0, cid).withRight(node1);
+                const node3 = await IPFSTree.createLeafWithKey(3, cid);
+                const node1 = await IPFSTree.createLeafWithKey(1, cid).withRight(node3);
+                const node0 = await IPFSTree.createLeafWithKey(0, cid).withRight(node1);
 
                 const node2 = IPFSTree.createLeafWithKey(2, cid);
                 const tree0 = node0;
