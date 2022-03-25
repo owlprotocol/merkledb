@@ -4,7 +4,7 @@ import { sha256 } from 'multiformats/hashes/sha2';
 import { IPFS } from 'ipfs';
 import { Digest } from 'multiformats/hashes/digest';
 import IPFSMerkleIndex from './IPFSMerkleIndex';
-import Tree from '../TreeBalanced';
+import Tree from '../Tree';
 
 export interface IPFSMerkleData {
     keyCID: CID;
