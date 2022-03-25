@@ -1,21 +1,64 @@
-import ComparableNumber from '../interfaces/ComparableNumber';
+import NumberTreeIndex from './NumberTreeIndex';
 import TreeSearch from './TreeSearch';
 
-export default class ComparableNumberTree extends TreeSearch<ComparableNumber> {
-    private readonly key: ComparableNumber;
-    private readonly left: TreeSearch<ComparableNumber> | undefined;
-    private readonly right: TreeSearch<ComparableNumber> | undefined;
-    private readonly parent: TreeSearch<ComparableNumber> | undefined;
+export default class NumberTree extends TreeSearch<NumberTreeIndex> {
+    private readonly key: NumberTreeIndex;
+    private readonly left: TreeSearch<NumberTreeIndex> | undefined;
+    private readonly right: TreeSearch<NumberTreeIndex> | undefined;
 
-    protected constructor(
-        key: ComparableNumber,
-        left: TreeSearch<ComparableNumber> | undefined,
-        right: TreeSearch<ComparableNumber> | undefined,
+    private constructor(
+        key: NumberTreeIndex,
+        left: TreeSearch<NumberTreeIndex> | undefined,
+        right: TreeSearch<NumberTreeIndex> | undefined,
     ) {
         super();
         this.key = key;
         this.left = left;
         this.right = right;
+    }
+
+    //Factory
+    //Pass key by reference
+    static create(
+        key: NumberTreeIndex,
+        left: TreeSearch<NumberTreeIndex> | undefined,
+        right: TreeSearch<NumberTreeIndex> | undefined,
+    ): NumberTree {
+        return new NumberTree(key, left, right);
+    }
+
+    static createLeaf(key: NumberTreeIndex) {
+        return this.create(key, undefined, undefined);
+    }
+
+    //Instantiate key
+    static createWithKey(
+        key: number,
+        left: TreeSearch<NumberTreeIndex> | undefined,
+        right: TreeSearch<NumberTreeIndex> | undefined,
+    ) {
+        return this.create(NumberTreeIndex.create(key), left, right);
+    }
+
+    static createLeafWithKey(key: number) {
+        return this.createWithKey(key, undefined, undefined);
+    }
+
+    withKey(key: NumberTreeIndex) {
+        if (key.equals(this.key)) return this;
+        return NumberTree.create(key, this.left, this.right);
+    }
+
+    withLeft(left: TreeSearch<NumberTreeIndex>) {
+        if (left === this.left) return this;
+        const n = NumberTree.create(this.key, left, this.right);
+        return n;
+    }
+
+    withRight(right: TreeSearch<NumberTreeIndex>) {
+        if (right === this.right) return this;
+        const n = NumberTree.create(this.key, this.left, right);
+        return n;
     }
 
     //Getters
@@ -27,57 +70,5 @@ export default class ComparableNumberTree extends TreeSearch<ComparableNumber> {
     }
     async getRight() {
         return this.right;
-    }
-    async getParent() {
-        return this.parent;
-    }
-
-    //Factory
-    //Pass key by reference
-    static create(
-        key: ComparableNumber,
-        left: TreeSearch<ComparableNumber> | undefined,
-        right: TreeSearch<ComparableNumber> | undefined,
-    ): ComparableNumberTree {
-        return new ComparableNumberTree(key, left, right);
-    }
-
-    //Instantiate key
-    static createWithValue(
-        key: number,
-        left: TreeSearch<ComparableNumber> | undefined,
-        right: TreeSearch<ComparableNumber> | undefined,
-    ) {
-        return this.create(new ComparableNumber(key), left, right);
-    }
-
-    static createLeaf(key: ComparableNumber) {
-        return this.create(key, undefined, undefined);
-    }
-
-    static createLeafWithValue(key: number) {
-        return this.createWithValue(key, undefined, undefined);
-    }
-
-    withKey(key: ComparableNumber) {
-        if (key.equals(this.key)) return this;
-        return ComparableNumberTree.create(key, this.left, this.right);
-    }
-
-    withLeft(left: TreeSearch<ComparableNumber>) {
-        if (left === this.left) return this;
-        const n = ComparableNumberTree.create(this.key, left, this.right);
-        return n;
-    }
-
-    withRight(right: TreeSearch<ComparableNumber>) {
-        if (right === this.right) return this;
-        const n = ComparableNumberTree.create(this.key, this.left, right);
-        return n;
-    }
-
-    setParent(parent: TreeSearch<ComparableNumber>) {
-        //@ts-expect-error
-        this.parent = parent;
     }
 }
