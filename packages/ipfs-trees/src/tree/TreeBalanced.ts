@@ -31,16 +31,20 @@ export default abstract class TreeBalanced<T> extends Tree<T> {
         }
     }
 
-    async *insertGenerator(a: TreeBalanced<T>): AsyncGenerator<TreeBalanced<T>> {
-        yield* TreeBalanced.insertGenerator(this, a);
-    }
-
-    async insert(a: TreeBalanced<T>): Promise<TreeBalanced<T>> {
-        const gen = this.insertGenerator(a);
+    static async insert<T>(root: TreeBalanced<T> | undefined, a: TreeBalanced<T>): Promise<TreeBalanced<T>> {
+        const gen = TreeBalanced.insertGenerator(root, a);
         let n: TreeBalanced<T>;
         for await (n of gen) {
             n = n;
         }
         return n!;
+    }
+
+    async *insertGenerator(a: TreeBalanced<T>): AsyncGenerator<TreeBalanced<T>> {
+        yield* TreeBalanced.insertGenerator(this, a);
+    }
+
+    async insert(a: TreeBalanced<T>): Promise<TreeBalanced<T>> {
+        return TreeBalanced.insert(this, a);
     }
 }
