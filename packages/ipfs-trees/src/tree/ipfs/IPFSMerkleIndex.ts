@@ -106,6 +106,9 @@ export default class IPFSMerkleIndex {
     isNullNode(): boolean {
         return this.leftHashCID === undefined && this.rightHashCID == undefined;
     }
+    toHex(): string {
+        return Buffer.from(this.hash.digest.buffer).toString('hex');
+    }
 
     //IPFS
     encode(): ByteView<IPFSMerkleIndexData> {

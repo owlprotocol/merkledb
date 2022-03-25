@@ -1,8 +1,11 @@
 import { CID } from 'multiformats';
 import IPFSMerkle from './IPFSMerkle';
 import IPFSMerkleIndex from './IPFSMerkleIndex';
+import IPFSTreeMap from './IPFSTreeMap';
 
 export default class IPFSMerkleTree extends IPFSMerkle {
+    private readonly _parentMapping: IPFSTreeMap | undefined;
+
     protected constructor(
         key: IPFSMerkleIndex | undefined,
         left: IPFSMerkleTree | undefined,
@@ -10,9 +13,21 @@ export default class IPFSMerkleTree extends IPFSMerkle {
         keyCID: CID | undefined,
         leftCID: CID | undefined,
         rightCID: CID | undefined,
+        parentMapping?: IPFSTreeMap | undefined,
     ) {
         super(key, left, right, keyCID, rightCID, leftCID);
+        if (!key) throw new Error('No key!');
+        this._parentMapping = parentMapping;
     }
+
+    static async createLeafAsync(key: IPFSMerkleIndex): Promise<IPFSMerkle> {
+        const n = this.create(key, undefined, undefined);
+        const cid = await n.cid();
+        //@ts-ignore
+        n._parentMapping = IPFSTreeMap.createMap(key.toHex(), cid);
+        return n;
+    }
+
     //Inserts and returns root
     static async *insertGenerator(root: IPFSMerkleTree | undefined, a: IPFSMerkleTree): AsyncGenerator<IPFSMerkleTree> {
         if (!root) {

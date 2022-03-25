@@ -21,7 +21,7 @@
   },
   "scripts": {
     "clean": "rimraf lib",
-    "test": "nyc mocha --require source-map-support/register",
+    "test": "nyc mocha 'lib/**/*.test.js'",
     "start": "node lib/index.js",
     "build": "npm-run-all tsc copy",
     "tsc": "tsc",

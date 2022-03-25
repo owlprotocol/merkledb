@@ -37,7 +37,7 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
     }
 
     //Factory
-    static create(key: number | string, valueCID: CID | undefined): IPFSTreeIndex {
+    static create(key: string, valueCID: CID | undefined): IPFSTreeIndex {
         return new IPFSTreeIndex(key, valueCID);
     }
 
@@ -50,11 +50,13 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
     equals(a: IPFSTreeIndex): boolean {
         return this.key === a.key;
     }
+
+    //Implement proper string compare
     lt(a: IPFSTreeIndex): boolean {
-        return this.key < a.key;
+        return parseInt(this.key) < parseInt(a.key);
     }
     gt(a: IPFSTreeIndex): boolean {
-        return this.key > a.key;
+        return parseInt(this.key) > parseInt(a.key);
     }
     isNullNode(): boolean {
         return this.valueCID === undefined;

@@ -73,7 +73,7 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
 
     //Instantiate key
     static createWithKey(
-        key: number,
+        key: string,
         valueCID: CID | undefined,
         left: TreeSearch<IPFSTreeIndex> | undefined,
         right: TreeSearch<IPFSTreeIndex> | undefined,
@@ -81,7 +81,7 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
         return this.create(IPFSTreeIndex.create(key, valueCID), left, right);
     }
 
-    static createLeafWithKey(key: number, valueCID: CID | undefined) {
+    static createLeafWithKey(key: string, valueCID: CID | undefined) {
         return this.createWithKey(key, valueCID, undefined, undefined);
     }
 
