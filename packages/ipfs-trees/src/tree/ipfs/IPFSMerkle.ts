@@ -4,7 +4,7 @@ import { sha256 } from 'multiformats/hashes/sha2';
 import { IPFS } from 'ipfs';
 import { Digest } from 'multiformats/hashes/digest';
 import IPFSMerkleIndex from './IPFSMerkleIndex';
-import TreeBalanced from '../TreeBalanced';
+import Tree from '../TreeBalanced';
 
 export interface IPFSMerkleData {
     keyCID: CID;
@@ -12,10 +12,10 @@ export interface IPFSMerkleData {
     rightCID?: CID;
 }
 
-export default class IPFSMerkle extends TreeBalanced<IPFSMerkleIndex> {
+export default class IPFSMerkle extends Tree<IPFSMerkleIndex> {
     private readonly _key: IPFSMerkleIndex | undefined;
-    private readonly _left: TreeBalanced<IPFSMerkleIndex> | undefined;
-    private readonly _right: TreeBalanced<IPFSMerkleIndex> | undefined;
+    private readonly _left: Tree<IPFSMerkleIndex> | undefined;
+    private readonly _right: Tree<IPFSMerkleIndex> | undefined;
 
     private readonly _keyCID: CID | undefined;
     private readonly _leftCID: CID | undefined;
@@ -39,8 +39,8 @@ export default class IPFSMerkle extends TreeBalanced<IPFSMerkleIndex> {
 
     protected constructor(
         key: IPFSMerkleIndex | undefined,
-        left: TreeBalanced<IPFSMerkleIndex> | undefined,
-        right: TreeBalanced<IPFSMerkleIndex> | undefined,
+        left: Tree<IPFSMerkleIndex> | undefined,
+        right: Tree<IPFSMerkleIndex> | undefined,
         keyCID: CID | undefined,
         leftCID: CID | undefined,
         rightCID: CID | undefined,
@@ -57,8 +57,8 @@ export default class IPFSMerkle extends TreeBalanced<IPFSMerkleIndex> {
     //Factory
     static create(
         key: IPFSMerkleIndex,
-        left: TreeBalanced<IPFSMerkleIndex> | undefined,
-        right: TreeBalanced<IPFSMerkleIndex> | undefined,
+        left: Tree<IPFSMerkleIndex> | undefined,
+        right: Tree<IPFSMerkleIndex> | undefined,
     ): IPFSMerkle {
         return new IPFSMerkle(key, left, right, undefined, undefined, undefined);
     }
@@ -76,8 +76,8 @@ export default class IPFSMerkle extends TreeBalanced<IPFSMerkleIndex> {
         hash: Digest<18, number>,
         leftHashCID: CID | undefined,
         rightHashCID: CID | undefined,
-        left: TreeBalanced<IPFSMerkleIndex> | undefined,
-        right: TreeBalanced<IPFSMerkleIndex> | undefined,
+        left: Tree<IPFSMerkleIndex> | undefined,
+        right: Tree<IPFSMerkleIndex> | undefined,
     ) {
         return this.create(IPFSMerkleIndex.create(hash, leftHashCID, rightHashCID), left, right);
     }
@@ -94,7 +94,7 @@ export default class IPFSMerkle extends TreeBalanced<IPFSMerkleIndex> {
     }
 
     //Node rotation, insert left
-    async withLeft(left: TreeBalanced<IPFSMerkleIndex>) {
+    async withLeft(left: Tree<IPFSMerkleIndex>) {
         if (!this._key) throw new Error('Node has no key!');
         if (left === this._left) return this;
 
@@ -106,7 +106,7 @@ export default class IPFSMerkle extends TreeBalanced<IPFSMerkleIndex> {
     }
 
     //Node rotation, insert right
-    async withRight(right: TreeBalanced<IPFSMerkleIndex>) {
+    async withRight(right: Tree<IPFSMerkleIndex>) {
         if (!this._key) throw new Error('Node has no key!');
         if (right === this._right) return this;
 
@@ -132,21 +132,21 @@ export default class IPFSMerkle extends TreeBalanced<IPFSMerkleIndex> {
         this._key = await IPFSMerkleIndex.createFromCID(this._keyCID);
         return this._key;
     }
-    async getLeft(): Promise<TreeBalanced<IPFSMerkleIndex> | undefined> {
+    async getLeft(): Promise<Tree<IPFSMerkleIndex> | undefined> {
         if (this._left) return this._left;
         if (!this._leftCID) return undefined;
 
         //@ts-expect-error
         this._left = await IPFSMerkle.createFromCID(this._leftCID);
-        return this._left as TreeBalanced<IPFSMerkleIndex>;
+        return this._left as Tree<IPFSMerkleIndex>;
     }
-    async getRight(): Promise<TreeBalanced<IPFSMerkleIndex> | undefined> {
+    async getRight(): Promise<Tree<IPFSMerkleIndex> | undefined> {
         if (this._right) return this._right;
         if (!this._rightCID) return undefined;
 
         //@ts-expect-error
         this._right = await IPFSMerkle.createFromCID(this._rightCID);
-        return this._right as TreeBalanced<IPFSMerkleIndex>;
+        return this._right as Tree<IPFSMerkleIndex>;
     }
 
     async getKeyCID(): Promise<CID> {
