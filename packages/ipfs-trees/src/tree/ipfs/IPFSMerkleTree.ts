@@ -1,10 +1,14 @@
 import { CID } from 'multiformats';
+import Tree from '../Tree';
 import IPFSMerkle from './IPFSMerkle';
 import IPFSMerkleIndex from './IPFSMerkleIndex';
 import IPFSTreeMap from './IPFSTreeMap';
 
 export default class IPFSMerkleTree extends IPFSMerkle {
+    //Maps node CIDs to parent
     private readonly _parentMapping: IPFSTreeMap | undefined;
+    //Maps leaf node hashes to CID
+    private readonly _leafMapping: IPFSTreeMap | undefined;
 
     protected constructor(
         key: IPFSMerkleIndex | undefined,
@@ -14,17 +18,29 @@ export default class IPFSMerkleTree extends IPFSMerkle {
         leftCID: CID | undefined,
         rightCID: CID | undefined,
         parentMapping?: IPFSTreeMap | undefined,
+        leafMapping?: IPFSTreeMap | undefined,
     ) {
         super(key, left, right, keyCID, rightCID, leftCID);
         if (!key) throw new Error('No key!');
         this._parentMapping = parentMapping;
+        this._leafMapping = leafMapping;
     }
 
-    static async createLeafAsync(key: IPFSMerkleIndex): Promise<IPFSMerkle> {
-        const n = this.create(key, undefined, undefined);
+    static async createLeafAsync(key: IPFSMerkleIndex): Promise<IPFSMerkleTree> {
+        const n = this.create(key, undefined, undefined) as IPFSMerkleTree;
         const cid = await n.cid();
+        //Map leaf
         //@ts-ignore
-        n._parentMapping = IPFSTreeMap.createMap(key.toHex(), cid);
+        n._leafMapping = IPFSTreeMap.createMap(key.toHex(), cid);
+        return n;
+    }
+
+    //Override factory to include parent mapping
+    override async withLeft(left: Tree<IPFSMerkleIndex>): Promise<IPFSMerkleTree> {
+        const n = await super.withLeft(left);
+        //@ts-ignore
+        this._parentMapping = this._parentMapping!.set();
+        //@ts-ignore
         return n;
     }
 
@@ -42,7 +58,14 @@ export default class IPFSMerkleTree extends IPFSMerkle {
             const left = await n.getLeft();
             if (left === undefined) {
                 //Set Left Node
-                yield (await n.withLeft(a)) as IPFSMerkleTree;
+                const newMerk = (await n.withLeft(a)) as IPFSMerkleTree;
+
+                //Leaf nodes
+                yield (await newMerk.getLeft()) as IPFSMerkleTree;
+                yield (await newMerk.getRight()) as IPFSMerkleTree;
+                //New Merkle Root
+                yield newMerk;
+
                 break;
             } else {
                 const right = await n.getRight();
@@ -71,4 +94,6 @@ export default class IPFSMerkleTree extends IPFSMerkle {
     async insert(a: IPFSMerkleTree): Promise<IPFSMerkleTree> {
         return IPFSMerkleTree.insert(this, a);
     }
+
+    //Merkle proof generator
 }
