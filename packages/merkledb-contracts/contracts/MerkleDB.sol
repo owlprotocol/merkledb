@@ -7,8 +7,6 @@ import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProo
 
 contract MerkleDB is IMerkleDB, AccessControl {
     bytes32 public merkleRoot;
-    string public merkleTreeIPFS;
-    string public databaseIPFS;
 
     bytes32 public constant MERKLE_ROLE = keccak256("MERKLE_ROLE");
 
@@ -26,21 +24,10 @@ contract MerkleDB is IMerkleDB, AccessControl {
         return MerkleProof.verify(path, merkleRoot, keccak256(bytesLeaf));
     }
 
-    function updateMerkle(bytes32 _merkleRoot, string calldata _merkleTreeIPFS)
-        external
-        override
-    {
+    function updateMerkle(bytes32 _merkleRoot) external override {
         require(hasRole(MERKLE_ROLE, _msgSender()));
         merkleRoot = _merkleRoot;
-        merkleTreeIPFS = _merkleTreeIPFS;
 
-        emit MerkleUpdate(merkleRoot, merkleTreeIPFS);
-    }
-
-    function updateDB(string calldata _databaseIPFS) external override {
-        require(hasRole(MERKLE_ROLE, _msgSender()));
-        databaseIPFS = _databaseIPFS;
-
-        emit DatabaseUpdate(databaseIPFS);
+        emit MerkleUpdate(merkleRoot);
     }
 }
