@@ -1,36 +1,12 @@
 import { code, encode } from '@ipld/dag-json';
 import { assert } from 'chai';
-import { existsSync, rmSync } from 'fs';
 import { CID } from 'multiformats';
-import { create as createIPFS, IPFS } from 'ipfs';
 import { sha256 } from 'multiformats/hashes/sha2';
 import IPFSTree from './IPFSTree';
-import IPFSTreeIndex from './IPFSTreeIndex';
-import IPFSSingleton from './IPFSSingleton';
+import IPFSMapInterface from '../interfaces/IPFSMapInterface';
+import asyncGeneratorToArray from '../utils/asyncGeneratorToArray';
 
 describe('IPFSMap.test.ts', () => {
-    let ipfs: IPFS;
-    before(async () => {
-        ['./ipfs'].map((p) => {
-            if (existsSync(p)) rmSync(p, { recursive: true });
-        });
-
-        //Write data to docs database
-        ipfs = await createIPFS({
-            repo: './ipfs',
-        });
-        IPFSSingleton.setIPFS(ipfs);
-        IPFSSingleton._totalNetworkGet = 0;
-        IPFSSingleton._totalNetworkPut = 0;
-    });
-
-    after(async () => {
-        await ipfs.stop();
-        ['./ipfs'].map((p) => {
-            if (existsSync(p)) rmSync(p, { recursive: true });
-        });
-    });
-
     it('null', async () => {
         const node0 = IPFSTree.createNull();
         const key0 = await node0.getKey();
@@ -68,6 +44,7 @@ describe('IPFSMap.test.ts', () => {
     });
 
     it('get/set json', async () => {
+        //DATA STRUCTURE is immutable
         let node0 = IPFSTree.createNull();
         node0 = await node0.setJSON('1', { message: 'hello' });
         const m = await node0.getJSON('1');
@@ -75,4 +52,16 @@ describe('IPFSMap.test.ts', () => {
         assert.isDefined(m);
         assert.deepEqual(m, { message: 'hello' });
     });
+
+    it('load from CID', async () => {
+        let map: IPFSMapInterface = IPFSTree.createNull();
+        map = await map.setJSON('1', { message: 'hello' });
+        map = await map.setJSON('2', { message: 'hello' });
+        map = await map.setJSON('3', { message: 'hello' });
+        const cid = map.cid();
+        const cidList = await asyncGeneratorToArray(map.putAll());
+
+        console.debug(cid)
+        console.debug(cidList)
+    })
 });

@@ -17,11 +17,14 @@ export default class IPFSSingleton {
     }
 
     //PUT
-    public static put(data: Uint8Array, options: any) {
+    public static async put(data: Uint8Array, options: any) {
         if (this.ipfs) return this.ipfs.block.put(data, options);
 
         //Mock IPFS Storage
-        throw new Error('Mock not implemented!');
+        const digest = await sha256.digest(data);
+        const cid = CID.create(0, 112, digest);
+        this.local[cid.toString()] = data;
+        return cid;
     }
 
     public static async putJSON(rec: Record<string, any>) {

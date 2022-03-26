@@ -32,6 +32,12 @@ export default class IPFSMerkleMap implements IPFSMapInterface {
         this._parentMap = _parentMap;
         this._leavesMap = _leavesMap;
     }
+    cid(): Promise<CID> {
+        throw new Error('Method not implemented.');
+    }
+    putAll(): AsyncGenerator<CID, any, unknown> {
+        throw new Error('Method not implemented.');
+    }
 
     static async createNull(): Promise<IPFSMerkleMap> {
         const merkleTree = await IPFSTreeMerkle.createNull();
@@ -51,14 +57,14 @@ export default class IPFSMerkleMap implements IPFSMapInterface {
     getJSON(k: string): Promise<Record<string, any> | undefined> {
         return this._leavesMap.getJSON(k);
     }
-    async setJSON(k: string, v: Record<string, any>): Promise<IPFSMerkleMap> {
+    async setJSON(k: string, v: Record<string, any>): Promise<IPFSMapInterface> {
         throw new Error('Method not implemented.');
     }
 
     async getCBOR(k: string): Promise<Record<string, any> | undefined> {
         return this._leavesMap.getCBOR(k);
     }
-    async setCBOR(k: string, v: Record<string, any>): Promise<IPFSMerkleMap> {
+    async setCBOR(k: string, v: Record<string, any>): Promise<IPFSMapInterface> {
         const data = encodeCBOR(v);
         //Use keccak256 hash
         const digestKeccak = keccak256(data.buffer);

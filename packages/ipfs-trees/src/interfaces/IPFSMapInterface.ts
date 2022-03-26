@@ -10,4 +10,7 @@ export default interface IPFSMapInterface extends MapInterface<string, CID | und
 
     getCBOR(k: string): Promise<Record<string, any> | undefined>;
     setCBOR(k: string, v: Record<string, any>): Promise<IPFSMapInterface>;
+
+    cid(): Promise<CID>;
+    putAll(): AsyncGenerator<CID>;
 }
