@@ -32,9 +32,9 @@ export default abstract class TreeMerkle<T> {
 
     //Yield siblings for merkle proof, last yield is root
     async *recurseSibling(): AsyncGenerator<TreeMerkle<T>> {
-        //Root node
         const parent = await this.getParent();
         if (!parent) {
+            //Yield root node
             yield this;
             return;
         }

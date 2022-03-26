@@ -5,6 +5,7 @@ import { keccak256 } from '@multiformats/sha3';
 import { Digest } from 'multiformats/hashes/digest';
 import { IPFS } from 'ipfs';
 import TreeMerkle from '../TreeMerkle';
+import { digestToString } from '../../utils';
 
 export interface IPFSTreeMerkleData {
     hash: Digest<18, number>;
@@ -145,18 +146,17 @@ export default class IPFSTreeMerkle extends TreeMerkle<Digest<18, number>> {
         }
     }
 
-    async verifyProof(proof: Iterable<Digest<18, number>>): Promise<boolean> {
-        let digest: Digest<18, number> | undefined;
+    static async verifyProof(proof: Digest<18, number>[]): Promise<boolean> {
+        let leafDigest = proof.shift();
+        const rootDigest = proof.pop();
+
         for (const s of proof) {
-            if (!digest) digest = s;
-            else digest = await IPFSTreeMerkle.joinDigests(digest, s);
+            leafDigest = await IPFSTreeMerkle.joinDigests(leafDigest!, s);
         }
 
-        const buff = Buffer.from(digest!.digest.buffer);
-
-        const rootHash = await this.getHash();
-        const rootBuff = Buffer.from(rootHash.digest.buffer);
-        return rootBuff.compare(buff) == 0;
+        const leafBuff = Buffer.from(leafDigest!.digest.buffer);
+        const rootBuff = Buffer.from(rootDigest!.digest.buffer);
+        return rootBuff.compare(leafBuff) == 0;
     }
 
     //IPFS

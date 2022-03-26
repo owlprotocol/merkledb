@@ -1,7 +1,5 @@
 import { assert } from 'chai';
 import { Digest } from 'multiformats/hashes/digest';
-//@ts-expect-error
-import { keccak256 } from '@multiformats/sha3'; //js-sha3
 import keccak256Fn from 'keccak256'; //keccak256
 import { zip } from 'lodash';
 import { MerkleTree } from 'merkletreejs';
@@ -9,18 +7,7 @@ import { MerkleTree } from 'merkletreejs';
 import asyncGeneratorToArray from '../../utils/asyncGeneratorToArray';
 import IPFSTreeMerkle from './IPFSTreeMerkle';
 import TreeMerkle from '../TreeMerkle';
-
-const encoder = new TextEncoder();
-function stringToDigest(s: string): Promise<Digest<18, number>> {
-    return keccak256.digest(encoder.encode(s));
-}
-
-function digestToString(a: Digest<18, number>) {
-    return Buffer.from(a.digest.buffer).toString('hex');
-}
-function digestEqual(a: Digest<18, number>, b: Digest<18, number>, m?: string) {
-    return assert.equal(digestToString(a), digestToString(b), m);
-}
+import { digestEqual, digestToString, stringToDigest } from '../../utils';
 
 describe('IPFSTreeMerkle.test.ts', () => {
     //Compare digests by reference?
@@ -210,7 +197,7 @@ describe('IPFSTreeMerkle.test.ts', () => {
             const proofs = await asyncGeneratorToArray(leaf.getProof());
             assert.deepEqual(proofs, [digests[0], digests['0-1']]);
 
-            const verifyProof = await tree.verifyProof([...proofs]);
+            const verifyProof = await IPFSTreeMerkle.verifyProof([digests[1], ...proofs]);
             assert.isTrue(verifyProof, 'verify proof!');
         });
         it('2-depth', async () => {
