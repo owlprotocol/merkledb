@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { CID } from 'multiformats';
 import { ByteView, encode as encodeJSON, decode as decodeJSON, code as codeJSON } from '@ipld/dag-json';
 import { sha256 } from 'multiformats/hashes/sha2';
@@ -7,6 +8,7 @@ import TreeSearch from '../tree/TreeSearch';
 import IPFSTreeKey from './IPFSTreeKey';
 import IPFSMapInterface from '../interfaces/IPFSMapInterface';
 import IPFSSingleton from './IPFSSingleton';
+import asyncGeneratorToArray from '../utils/asyncGeneratorToArray';
 
 export interface IPFSTreeData {
     keyCID: CID;
@@ -16,8 +18,8 @@ export interface IPFSTreeData {
 
 export default class IPFSTree extends TreeSearch<IPFSTreeKey> implements IPFSMapInterface {
     private readonly _key: IPFSTreeKey | undefined;
-    private readonly _left: TreeSearch<IPFSTreeKey> | undefined;
-    private readonly _right: TreeSearch<IPFSTreeKey> | undefined;
+    private readonly _left: IPFSTree | undefined;
+    private readonly _right: IPFSTree | undefined;
 
     private readonly _keyCID: CID | undefined;
     private readonly _leftCID: CID | undefined;
@@ -30,8 +32,8 @@ export default class IPFSTree extends TreeSearch<IPFSTreeKey> implements IPFSMap
 
     protected constructor(
         key: IPFSTreeKey | undefined,
-        left: TreeSearch<IPFSTreeKey> | undefined,
-        right: TreeSearch<IPFSTreeKey> | undefined,
+        left: IPFSTree | undefined,
+        right: IPFSTree | undefined,
         keyCID: CID | undefined,
         leftCID: CID | undefined,
         rightCID: CID | undefined,
@@ -45,9 +47,68 @@ export default class IPFSTree extends TreeSearch<IPFSTreeKey> implements IPFSMap
         this._rightCID = rightCID;
     }
 
-    //Map
+    //Factory
     static createNull(): IPFSTree {
-        return IPFSTree.createLeafWithKey('0', undefined);
+        return new IPFSTree(undefined, undefined, undefined, undefined, undefined, undefined);
+    }
+    isNull(): boolean {
+        return this._keyCID === undefined && this._key === undefined;
+    }
+
+    static create(
+        key: IPFSTreeKey,
+        left: IPFSTree | undefined,
+        right: IPFSTree | undefined,
+    ): IPFSTree {
+        return new IPFSTree(key, left, right, undefined, undefined, undefined);
+    }
+
+    static createWithCIDs(keyCID: CID, leftCID: CID | undefined, rightCID: CID | undefined): IPFSTree {
+        return new IPFSTree(undefined, undefined, undefined, keyCID, leftCID, rightCID);
+    }
+
+    static createLeaf(key: IPFSTreeKey): IPFSTree {
+        return this.create(key, undefined, undefined);
+    }
+
+    //Instantiate key
+    static createWithKey(
+        key: string,
+        valueCID: CID | undefined,
+        left: IPFSTree | undefined,
+        right: IPFSTree | undefined,
+    ) {
+        return this.create(IPFSTreeKey.create(key, valueCID), left, right);
+    }
+
+    static createLeafWithKey(key: string, valueCID: CID | undefined) {
+        return this.createWithKey(key, valueCID, undefined, undefined);
+    }
+
+    //Async Factory
+    //Factory helpers that ALWAYS create a copy
+    //@ts-expect-error
+    async withKey(key: IPFSTreeKey) {
+        if (!this._key) throw new Error('Node has no key!');
+        return IPFSTree.create(key, this._left, this._right);
+    }
+    //@ts-expect-error
+    async withLeft(left: IPFSTree) {
+        if (!this._key) throw new Error('Node has no key!');
+        const n = IPFSTree.create(this._key, left, this._right);
+        return n;
+    }
+    //@ts-expect-error
+    async withRight(right: IPFSTree) {
+        if (!this._key) throw new Error('Node has no key!');
+        const n = IPFSTree.create(this._key, this._left, right);
+        return n;
+    }
+
+    //Async Factory
+    static async createFromCID(cid: CID): Promise<IPFSTree> {
+        const data = await IPFSSingleton.get(cid);
+        return IPFSTree.decode(data);
     }
 
     //Get/Set KV
@@ -82,84 +143,34 @@ export default class IPFSTree extends TreeSearch<IPFSTreeKey> implements IPFSMap
         return await this.set(k, cid);
     }
 
-    //Factory
-    static create(
-        key: IPFSTreeKey,
-        left: TreeSearch<IPFSTreeKey> | undefined,
-        right: TreeSearch<IPFSTreeKey> | undefined,
-    ): IPFSTree {
-        return new IPFSTree(key, left, right, undefined, undefined, undefined);
-    }
-
-    static createWithCIDs(keyCID: CID, leftCID: CID | undefined, rightCID: CID | undefined): IPFSTree {
-        return new IPFSTree(undefined, undefined, undefined, keyCID, leftCID, rightCID);
-    }
-
-    static createLeaf(key: IPFSTreeKey): IPFSTree {
-        return this.create(key, undefined, undefined);
-    }
-
-    //Instantiate key
-    static createWithKey(
-        key: string,
-        valueCID: CID | undefined,
-        left: TreeSearch<IPFSTreeKey> | undefined,
-        right: TreeSearch<IPFSTreeKey> | undefined,
-    ) {
-        return this.create(IPFSTreeKey.create(key, valueCID), left, right);
-    }
-
-    static createLeafWithKey(key: string, valueCID: CID | undefined) {
-        return this.createWithKey(key, valueCID, undefined, undefined);
-    }
-
-    //Factory helpers that ALWAYS create a copy
-    async withKey(key: IPFSTreeKey) {
-        if (!this._key) throw new Error('Node has no key!');
-        return IPFSTree.create(key, this._left, this._right);
-    }
-
-    async withLeft(left: TreeSearch<IPFSTreeKey>) {
-        if (!this._key) throw new Error('Node has no key!');
-        const n = IPFSTree.create(this._key, left, this._right);
-        return n;
-    }
-
-    async withRight(right: TreeSearch<IPFSTreeKey>) {
-        if (!this._key) throw new Error('Node has no key!');
-        const n = IPFSTree.create(this._key, this._left, right);
-        return n;
-    }
-
-    //Async Factory
-    static async createFromCID(cid: CID): Promise<IPFSTree> {
-        const data = await IPFSSingleton.get(cid);
-        return IPFSTree.decode(data);
-    }
-
     //Getters
-    async getKey(): Promise<IPFSTreeKey> {
+    async getKey(): Promise<IPFSTreeKey | undefined> {
+        if (this.isNull()) return undefined;
         if (this._key) return this._key;
 
         //@ts-expect-error
         this._key = await IPFSTreeKey.createFromCID(this._keyCID);
         return this._key;
     }
-    async getLeft(): Promise<TreeSearch<IPFSTreeKey> | undefined> {
+    //@ts-expect-error
+    async getLeft(): Promise<IPFSTree | undefined> {
+        if (this.isNull()) return undefined;
         if (this._left) return this._left;
         if (!this._leftCID) return undefined;
 
         //@ts-expect-error
         this._left = await IPFSTree.createFromCID(this._leftCID);
-        return this._left as TreeSearch<IPFSTreeKey>;
+        return this._left;
     }
-    async getRight(): Promise<TreeSearch<IPFSTreeKey> | undefined> {
+    //@ts-expect-error
+    async getRight(): Promise<IPFSTree | undefined> {
+        if (this.isNull()) return undefined;
         if (this._right) return this._right;
         if (!this._rightCID) return undefined;
 
         //@ts-expect-error
         this._right = await IPFSTree.createFromCID(this._rightCID);
-        return this._right as TreeSearch<IPFSTreeKey>;
+        return this._right;
     }
 
     async getKeyCID(): Promise<CID> {
@@ -222,6 +233,59 @@ export default class IPFSTree extends TreeSearch<IPFSTreeKey> implements IPFSMap
         const hash = await this.digest();
         this._cidCache = CID.create(1, codeJSON, hash);
         return this._cidCache;
+    }
+
+    //Iterate
+    async *getEntriesGen(): AsyncGenerator<[string, Record<string, any>]> {
+        for await (const n of this.inOrderTraversal()) {
+            const k = await n.getKey()
+            const key = k.key;
+            if (k.valueCID) {
+                const value = await IPFSSingleton.getJSON(k.valueCID);
+                if (value) {
+                    yield [key, value]
+                }
+            }
+        }
+    };
+    async getEntries(): Promise<[string, Record<string, any>][]> {
+        const entriesGen = this.getEntriesGen()
+        return asyncGeneratorToArray(entriesGen);
+    }
+
+    //Includes null keys
+    async *getKeysGen(): AsyncGenerator<string> {
+        for await (const n of this.inOrderTraversal()) {
+            const k = await n.getKey()
+            yield k.key;
+        }
+    }
+    async getKeys(): Promise<string[]> {
+        const keysGen = this.getKeysGen()
+        return asyncGeneratorToArray(keysGen);
+    }
+
+    async *getValuesGen(): AsyncGenerator<Record<string, any>> {
+        for await (const n of this.getEntriesGen()) {
+            yield n[1]
+        }
+    }
+    async getValues(): Promise<Record<string, any>> {
+        const valuesGen = this.getValuesGen();
+        return asyncGeneratorToArray(valuesGen);
+    }
+
+    async rootKey(): Promise<string | undefined> {
+        const k = await this.getKey();
+        if (!k) return undefined;
+        return k.key;
+    }
+    async rootValue(): Promise<Record<string, any> | undefined> {
+        const k = await this.getKey();
+        if (!k) return undefined;
+        if (!k.valueCID) return undefined;
+        const value = await IPFSSingleton.getJSON(k.valueCID);
+        return value;
     }
 
     //Put

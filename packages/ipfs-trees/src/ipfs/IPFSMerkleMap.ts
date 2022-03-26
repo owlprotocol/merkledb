@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { CID } from 'multiformats';
 import {
     ByteView,

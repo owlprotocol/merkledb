@@ -14,4 +14,24 @@ export default interface IPFSMapInterface extends MapInterface<string, CID | und
     cid(): Promise<CID>;
     putAll(): AsyncGenerator<{ node: Promise<CID>; key: Promise<CID | undefined> }>;
     putAllSync(): Promise<{ node: CID; key: CID | undefined }[]>;
+
+    getEntriesGen(): AsyncGenerator<[string, Record<string, any>]>;
+    getEntries(): Promise<[string, Record<string, any>][]>
+
+    getKeysGen(): AsyncGenerator<string>
+    getKeys(): Promise<string[]>
+
+    getValuesGen(): AsyncGenerator<Record<string, any>>
+    getValues(): Promise<Record<string, any>>
+
+    rootKey(): Promise<string | undefined>,
+    rootValue(): Promise<Record<string, any> | undefined>
+
+    /*
+    getRangeGen(start: string, end: string): AsyncGenerator<IPFSMapInterface>
+    getRange(start: string, end: string): Promise<IPFSMapInterface[]>
+
+    getRangeIdxGen(startIdx: number, end: number): AsyncGenerator<IPFSMapInterface>
+    getRangeIdx(startIdx: number, end: number): Promise<IPFSMapInterface[]>
+    */
 }

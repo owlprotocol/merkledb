@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { assert } from 'chai';
 import { uniq, sortBy, zip } from 'lodash';
 import asyncGeneratorToArray from '../utils/asyncGeneratorToArray';

@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { assert } from 'chai';
 import asyncGeneratorToArray from '../utils/asyncGeneratorToArray';
 import TestTreeMerkle from './TestTreeMerkle';
