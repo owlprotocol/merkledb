@@ -17,7 +17,6 @@ describe('IPFSTree.test.ts', () => {
      *   node2  node4
      *     /
      *  node1
-     *
      */
     let tree: IPFSTree;
     let node1: IPFSTree;
@@ -38,29 +37,29 @@ describe('IPFSTree.test.ts', () => {
 
     beforeEach(async () => {
         //Leaves
-        node1 = IPFSTree.createLeafWithKey(1, cid);
-        node4 = IPFSTree.createLeafWithKey(4, cid);
+        node1 = await IPFSTree.createLeafWithKey('1', cid);
+        node4 = await IPFSTree.createLeafWithKey('4', cid);
 
         //Nodes
-        node2 = await IPFSTree.createWithKey(2, cid, node1, undefined);
-        node3 = await IPFSTree.createWithKey(3, cid, node2, node4);
+        node2 = await IPFSTree.createWithKey('2', cid, node1, undefined);
+        node3 = await IPFSTree.createWithKey('3', cid, node2, node4);
         tree = node3;
     });
 
     describe('Single Node', async () => {
         it('getKey()', async () => {
-            const node0 = IPFSTree.createLeafWithKey(0, cid);
+            const node0 = IPFSTree.createLeafWithKey('0', cid);
             const key = await node0.getKey();
-            assert.equal(key.key, 0);
+            assert.equal(key.key, '0');
             assert.equal(key.valueCID, cid);
         });
 
         it('withKey()', async () => {
-            const node0 = IPFSTree.createLeafWithKey(0, cid);
-            const node1 = node0.withKey(IPFSTreeIndex.create(1, cid));
+            const node0 = await IPFSTree.createLeafWithKey('0', cid);
+            const node1 = await node0.withKey(IPFSTreeIndex.create('1', cid));
 
             const key = await node1.getKey();
-            assert.equal(key.key, 1);
+            assert.equal(key.key, '1');
             assert.equal(key.valueCID, cid);
 
             assert.notEqual(node1, node0);
@@ -68,9 +67,9 @@ describe('IPFSTree.test.ts', () => {
         });
 
         it('withLeft()', async () => {
-            const node0 = IPFSTree.createLeafWithKey(0, cid);
-            const node1 = node0.withKey(IPFSTreeIndex.create(1, cid));
-            const node0v2 = node0.withLeft(node1);
+            const node0 = IPFSTree.createLeafWithKey('0', cid);
+            const node1 = await node0.withKey(IPFSTreeIndex.create('1', cid));
+            const node0v2 = await node0.withLeft(node1);
 
             const key0 = await node0.getKey();
             const key0v2 = await node0v2.getKey();
@@ -79,7 +78,7 @@ describe('IPFSTree.test.ts', () => {
         });
 
         it('encode/decode', async () => {
-            const node0 = IPFSTree.createLeafWithKey(0, cid);
+            const node0 = IPFSTree.createLeafWithKey('0', cid);
             const node0Encode = await node0.encode();
 
             const node0Decode = await IPFSTree.decode(node0Encode);
@@ -119,7 +118,7 @@ describe('IPFSTree.test.ts', () => {
             });
 
             it('put/get()', async () => {
-                const node0 = IPFSTree.createLeafWithKey(0, cid);
+                const node0 = IPFSTree.createLeafWithKey('0', cid);
                 const node0CID = await node0.put();
                 assert.equal(IPFSTree._totalNetworkPut, 1, 'IPFSTree._totalNetworkPut');
 
@@ -139,23 +138,23 @@ describe('IPFSTree.test.ts', () => {
 
     describe('search', () => {
         it('root', async () => {
-            const searchResult = await tree.search(IPFSTreeIndex.create(3, cid));
+            const searchResult = await tree.search(IPFSTreeIndex.create('3', cid));
             const searchResultContent = await searchResult!.getKey();
 
-            assert.isTrue(searchResultContent.equals(IPFSTreeIndex.create(3, cid)));
+            assert.isTrue(searchResultContent.equals(IPFSTreeIndex.create('3', cid)));
             assert.equal(searchResult, node3);
         });
 
         it('leaf', async () => {
-            const searchResult = await tree.search(IPFSTreeIndex.create(1, cid));
+            const searchResult = await tree.search(IPFSTreeIndex.create('1', cid));
             const searchResultContent = await searchResult!.getKey();
 
-            assert.isTrue(searchResultContent.equals(IPFSTreeIndex.create(1, cid)));
+            assert.isTrue(searchResultContent.equals(IPFSTreeIndex.create('1', cid)));
             assert.equal(searchResult, node1);
         });
 
         it('not found!', async () => {
-            const searchResult = await tree.search(IPFSTreeIndex.create(0, cid));
+            const searchResult = await tree.search(IPFSTreeIndex.create('0', cid));
             assert.isUndefined(searchResult);
         });
 
@@ -194,13 +193,13 @@ describe('IPFSTree.test.ts', () => {
                  *             \
                  *             node3
                  */
-                const node3 = IPFSTree.createLeafWithKey(3, cid);
-                const node2 = IPFSTree.createLeafWithKey(2, cid).withRight(node3);
-                const node1 = IPFSTree.createLeafWithKey(1, cid).withRight(node2);
-                const node0 = IPFSTree.createLeafWithKey(0, cid).withRight(node1);
-                const searchResult1 = await node0.search(IPFSTreeIndex.create(3, cid));
+                const node3 = IPFSTree.createLeafWithKey('3', cid);
+                const node2 = await IPFSTree.createLeafWithKey('2', cid).withRight(node3);
+                const node1 = await IPFSTree.createLeafWithKey('1', cid).withRight(node2);
+                const node0 = await IPFSTree.createLeafWithKey('0', cid).withRight(node1);
+                const searchResult1 = await node0.search(IPFSTreeIndex.create('3', cid));
                 const searchResult1Key = await searchResult1?.getKey();
-                assert.equal(searchResult1Key?.key, 3, 'searchResult1.key');
+                assert.equal(searchResult1Key?.key, '3', 'searchResult1.key');
 
                 const { node: node0P, key: key0P } = node0.putWithKey();
                 const { node: node1P, key: key1P } = node1.putWithKey();
@@ -212,9 +211,9 @@ describe('IPFSTree.test.ts', () => {
                 assert.equal(IPFSTreeIndex._totalNetworkPut, 4, 'IPFSTreeIndex._totalNetworkPut');
 
                 const node0Load = await IPFSTree.createFromCID(await node0.cid());
-                const searchResult2 = await node0Load.search(IPFSTreeIndex.create(3, cid));
+                const searchResult2 = await node0Load.search(IPFSTreeIndex.create('3', cid));
                 const searchResult2Key = await searchResult2?.getKey();
-                assert.equal(searchResult2Key?.key, 3, 'searchResult1.key');
+                assert.equal(searchResult2Key?.key, '3', 'searchResult1.key');
 
                 assert.equal(IPFSTree._totalNetworkGet, 4, 'IPFSTreeIndex._totalNetworkGet');
                 assert.equal(IPFSTreeIndex._totalNetworkGet, 4, 'IPFSTreeIndex._totalNetworkGet');
@@ -223,7 +222,7 @@ describe('IPFSTree.test.ts', () => {
 
         describe('insert', () => {
             it('null', async () => {
-                const node0 = IPFSTree.createLeafWithKey(0, cid);
+                const node0 = IPFSTree.createLeafWithKey('0', cid);
                 const tree0 = undefined;
                 let tree1: IPFSTree;
                 for await (const n of IPFSTree.insertGenerator(tree0, node0)) {
@@ -233,13 +232,13 @@ describe('IPFSTree.test.ts', () => {
                 assert.equal(tree1!, node0);
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [0];
+                const valuesExpected = ['0'];
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
             it('root', async () => {
-                const node0 = IPFSTree.createLeafWithKey(0, cid);
-                const node1 = IPFSTree.createLeafWithKey(1, cid);
+                const node0 = IPFSTree.createLeafWithKey('0', cid);
+                const node1 = IPFSTree.createLeafWithKey('1', cid);
                 const tree0 = node0;
                 let tree1: IPFSTree;
                 for await (const n of IPFSTree.insertGenerator(tree0, node1)) {
@@ -249,7 +248,7 @@ describe('IPFSTree.test.ts', () => {
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [0, 1];
+                const valuesExpected = ['0', '1'];
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
@@ -263,11 +262,11 @@ describe('IPFSTree.test.ts', () => {
                  *             \
                  *           insert(node3)
                  */
-                const node2 = IPFSTree.createLeafWithKey(2, cid);
-                const node1 = IPFSTree.createLeafWithKey(1, cid).withRight(node2);
-                const node0 = IPFSTree.createLeafWithKey(0, cid).withRight(node1);
+                const node2 = await IPFSTree.createLeafWithKey('2', cid);
+                const node1 = await IPFSTree.createLeafWithKey('1', cid).withRight(node2);
+                const node0 = await IPFSTree.createLeafWithKey('0', cid).withRight(node1);
 
-                const node3 = IPFSTree.createLeafWithKey(3, cid);
+                const node3 = IPFSTree.createLeafWithKey('3', cid);
                 const tree0 = node0;
                 let tree1: IPFSTree;
                 for await (const n of IPFSTree.insertGenerator(tree0, node3)) {
@@ -276,7 +275,7 @@ describe('IPFSTree.test.ts', () => {
                 assert.notEqual(tree1!, tree0);
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [0, 1, 2, 3];
+                const valuesExpected = [0, 1, 2, 3].map((x) => `${x}`);
                 assert.deepEqual(valuesInOrder, valuesExpected);
                 //Verify non-mutation
                 const tree0InOrder = tree0.inOrderTraversal();
@@ -302,11 +301,11 @@ describe('IPFSTree.test.ts', () => {
                  *            /
                  *     insert(node2)
                  */
-                const node3 = IPFSTree.createLeafWithKey(3, cid);
-                const node1 = IPFSTree.createLeafWithKey(1, cid).withRight(node3);
-                const node0 = IPFSTree.createLeafWithKey(0, cid).withRight(node1);
+                const node3 = await IPFSTree.createLeafWithKey('3', cid);
+                const node1 = await IPFSTree.createLeafWithKey('1', cid).withRight(node3);
+                const node0 = await IPFSTree.createLeafWithKey('0', cid).withRight(node1);
 
-                const node2 = IPFSTree.createLeafWithKey(2, cid);
+                const node2 = IPFSTree.createLeafWithKey('2', cid);
                 const tree0 = node0;
                 let tree1: IPFSTree;
                 for await (const n of IPFSTree.insertGenerator(tree0, node2)) {
@@ -315,12 +314,12 @@ describe('IPFSTree.test.ts', () => {
                 assert.notEqual(tree1!, tree0);
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [0, 1, 2, 3];
+                const valuesExpected = [0, 1, 2, 3].map((x) => `${x}`);
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
             it('insert(0)-1-2-3-4', async () => {
-                const node0 = IPFSTree.createLeafWithKey(0, cid);
+                const node0 = IPFSTree.createLeafWithKey('0', cid);
                 let tree1 = tree;
                 for await (const n of IPFSTree.insertGenerator(tree, node0)) {
                     tree1 = n as IPFSTree;
@@ -328,12 +327,12 @@ describe('IPFSTree.test.ts', () => {
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [0, 1, 2, 3, 4];
+                const valuesExpected = [0, 1, 2, 3, 4].map((x) => `${x}`);
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
             it('1-2-3-4-insert(5)', async () => {
-                const node5 = IPFSTree.createLeafWithKey(5, cid);
+                const node5 = IPFSTree.createLeafWithKey('5', cid);
                 let tree1 = tree;
                 for await (const n of IPFSTree.insertGenerator(tree, node5)) {
                     tree1 = n as IPFSTree;
@@ -341,12 +340,12 @@ describe('IPFSTree.test.ts', () => {
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [1, 2, 3, 4, 5];
+                const valuesExpected = [1, 2, 3, 4, 5].map((x) => `${x}`);
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
             it('1-2-3-4 duplicate', async () => {
-                const node4 = IPFSTree.createLeafWithKey(4, cid);
+                const node4 = IPFSTree.createLeafWithKey('4', cid);
                 let tree1 = tree;
                 for await (const n of IPFSTree.insertGenerator(tree1, node4)) {
                     tree1 = n as IPFSTree;
@@ -354,24 +353,24 @@ describe('IPFSTree.test.ts', () => {
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = [1, 2, 3, 4];
+                const valuesExpected = [1, 2, 3, 4].map((x) => `${x}`);
                 assert.deepEqual(valuesInOrder, valuesExpected);
                 //Reference un-changed
                 assert.equal(tree1, tree, 'reference changed despite no mutation');
             });
 
             it('sorted 0-100', async () => {
-                const values = [0];
-                const node0 = IPFSTree.createLeafWithKey(0, cid);
+                const values = ['0'];
+                const node0 = IPFSTree.createLeafWithKey('0', cid);
                 let tree1 = node0;
                 for (let i = 1; i < 100; i++) {
-                    values.push(i);
-                    tree1 = (await tree1.insert(IPFSTree.createLeafWithKey(i, cid))) as IPFSTree;
+                    values.push(`${i}`);
+                    tree1 = (await tree1.insert(IPFSTree.createLeafWithKey(`${i}`, cid))) as IPFSTree;
                 }
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = values;
+                const valuesExpected = sortBy(values);
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
@@ -383,9 +382,10 @@ describe('IPFSTree.test.ts', () => {
                  *    / \   / \
                  *   0   7 12 20
                  *
+                 *  OUTDATED GRAPH
                  */
-                const values = [10, 5, 15, 0, 7, 20, 12];
-                const node0 = IPFSTree.createLeafWithKey(10, cid);
+                const values = ['10', '5', '15', '0', '7', '20', '12'];
+                const node0 = IPFSTree.createLeafWithKey('10', cid);
                 let tree1 = node0;
                 for (let i = 1; i < values.length; i++) {
                     const v = values[i];
@@ -394,18 +394,18 @@ describe('IPFSTree.test.ts', () => {
 
                 //Verify in-order traversal
                 const valuesInOrder = (await tree1!.getKeysInOrder()).map((v) => v.key);
-                const valuesExpected = values.sort((a, b) => a - b);
+                const valuesExpected = sortBy(values);
                 assert.deepEqual(valuesInOrder, valuesExpected);
             });
 
             it('random 1000', async () => {
-                const values = [0];
-                const node0 = IPFSTree.createLeafWithKey(0, cid);
+                const values = ['0'];
+                const node0 = IPFSTree.createLeafWithKey('0', cid);
                 let tree1 = node0;
                 for (let i = 1; i < 1000; i++) {
                     const v = Math.ceil(Math.random() * 100);
-                    values.push(v);
-                    tree1 = (await tree1.insert(IPFSTree.createLeafWithKey(v, cid))) as IPFSTree;
+                    values.push(`${v}`);
+                    tree1 = (await tree1.insert(IPFSTree.createLeafWithKey(`${v}`, cid))) as IPFSTree;
                 }
 
                 //Verify in-order traversal

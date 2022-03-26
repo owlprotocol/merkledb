@@ -1,18 +1,18 @@
 import { CID } from 'multiformats';
 import { ByteView, encode, decode, code } from '@ipld/dag-json';
 import { sha256 } from 'multiformats/hashes/sha2';
-import Comparable from '../interfaces/Comparable';
+import Comparable from '../../interfaces/Comparable';
 import { Digest } from 'multiformats/hashes/digest';
 import { IPFS } from 'ipfs';
 
 export interface IPFSTreeIndexData {
-    key: number;
-    valueCID: CID;
+    key: string;
+    valueCID: CID | undefined;
 }
 
 export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
-    readonly key: number;
-    readonly valueCID: CID;
+    readonly key: string;
+    readonly valueCID: CID | undefined;
 
     //memoization
     private _encodeCache: ByteView<IPFSTreeIndexData> | undefined;
@@ -29,13 +29,15 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
         this._ipfs = ipfs;
     }
 
-    private constructor(key: number, valueCID: CID) {
-        this.key = key;
+    private constructor(key: string | number, valueCID: CID | undefined) {
+        if (typeof key === 'number') this.key = `${key}`;
+        else this.key = key;
+
         this.valueCID = valueCID;
     }
 
     //Factory
-    static create(key: number, valueCID: CID): IPFSTreeIndex {
+    static create(key: string, valueCID: CID | undefined): IPFSTreeIndex {
         return new IPFSTreeIndex(key, valueCID);
     }
 
@@ -48,11 +50,16 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
     equals(a: IPFSTreeIndex): boolean {
         return this.key === a.key;
     }
+
+    //Implement proper string compare
     lt(a: IPFSTreeIndex): boolean {
         return this.key < a.key;
     }
     gt(a: IPFSTreeIndex): boolean {
-        return this.key > a.key;
+        return !this.equals(a) && !this.lt(a);
+    }
+    isNullNode(): boolean {
+        return this.valueCID === undefined;
     }
 
     //IPFS
@@ -62,8 +69,9 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
         //Data
         const data: IPFSTreeIndexData = {
             key: this.key,
-            valueCID: this.valueCID,
+            valueCID: undefined,
         };
+        if (this.valueCID) data.valueCID = this.valueCID;
         //Encode
         this._encodeCache = encode(data);
         return this._encodeCache;

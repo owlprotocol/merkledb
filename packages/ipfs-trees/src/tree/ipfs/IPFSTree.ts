@@ -3,7 +3,7 @@ import { ByteView, encode, decode, code } from '@ipld/dag-json';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { IPFS } from 'ipfs';
 import { Digest } from 'multiformats/hashes/digest';
-import TreeSearch from './TreeSearch';
+import TreeSearch from '../TreeSearch';
 import IPFSTreeIndex from './IPFSTreeIndex';
 
 export interface IPFSTreeData {
@@ -37,7 +37,7 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
         IPFSTreeIndex.setIPFS(ipfs);
     }
 
-    private constructor(
+    protected constructor(
         key: IPFSTreeIndex | undefined,
         left: TreeSearch<IPFSTreeIndex> | undefined,
         right: TreeSearch<IPFSTreeIndex> | undefined,
@@ -73,26 +73,26 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
 
     //Instantiate key
     static createWithKey(
-        key: number,
-        valueCID: CID,
+        key: string,
+        valueCID: CID | undefined,
         left: TreeSearch<IPFSTreeIndex> | undefined,
         right: TreeSearch<IPFSTreeIndex> | undefined,
     ) {
         return this.create(IPFSTreeIndex.create(key, valueCID), left, right);
     }
 
-    static createLeafWithKey(key: number, valueCID: CID) {
+    static createLeafWithKey(key: string, valueCID: CID | undefined) {
         return this.createWithKey(key, valueCID, undefined, undefined);
     }
 
-    withKey(key: IPFSTreeIndex) {
+    async withKey(key: IPFSTreeIndex) {
         if (!this._key) throw new Error('Node has no key!');
 
         if (key.equals(this._key)) return this;
         return IPFSTree.create(key, this._left, this._right);
     }
 
-    withLeft(left: TreeSearch<IPFSTreeIndex>) {
+    async withLeft(left: TreeSearch<IPFSTreeIndex>) {
         if (!this._key) throw new Error('Node has no key!');
 
         if (left === this._left) return this;
@@ -100,7 +100,7 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
         return n;
     }
 
-    withRight(right: TreeSearch<IPFSTreeIndex>) {
+    async withRight(right: TreeSearch<IPFSTreeIndex>) {
         if (!this._key) throw new Error('Node has no key!');
 
         if (right === this._right) return this;
