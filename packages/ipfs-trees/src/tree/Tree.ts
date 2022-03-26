@@ -1,15 +1,15 @@
-import TreeInterface from './TreeInterface';
+import TreeInterface from '../interfaces/TreeInterface';
 
-export default abstract class Tree<T> implements TreeInterface<T> {
-    abstract getKey(): Promise<T>;
-    abstract getLeft(): Promise<TreeInterface<T> | undefined>;
-    abstract getRight(): Promise<TreeInterface<T> | undefined>;
-    abstract withKey(key: T): Promise<TreeInterface<T>>;
-    abstract withLeft(left: TreeInterface<T>): Promise<TreeInterface<T>>;
-    abstract withRight(right: TreeInterface<T>): Promise<TreeInterface<T>>;
+export default abstract class Tree<K> implements TreeInterface<K> {
+    abstract getKey(): Promise<K>;
+    abstract getLeft(): Promise<Tree<K> | undefined>;
+    abstract getRight(): Promise<Tree<K> | undefined>;
+    abstract withKey(key: K): Promise<Tree<K>>;
+    abstract withLeft(left: Tree<K>): Promise<Tree<K>>;
+    abstract withRight(right: Tree<K>): Promise<Tree<K>>;
 
     //Left, Root, Right
-    static async *inOrderTraversal<T>(root: TreeInterface<T> | undefined): AsyncGenerator<TreeInterface<T>> {
+    static async *inOrderTraversal<T>(root: Tree<T> | undefined): AsyncGenerator<Tree<T>> {
         if (!root) return;
 
         yield* Tree.inOrderTraversal(await root.getLeft());
@@ -17,12 +17,12 @@ export default abstract class Tree<T> implements TreeInterface<T> {
         yield* Tree.inOrderTraversal(await root.getRight());
     }
 
-    async *inOrderTraversal(): AsyncGenerator<TreeInterface<T>> {
+    async *inOrderTraversal(): AsyncGenerator<Tree<K>> {
         yield* Tree.inOrderTraversal(this);
     }
 
     //Root, Left, Right
-    static async *preOrderTraversal<T>(root: TreeInterface<T> | undefined): AsyncGenerator<TreeInterface<T>> {
+    static async *preOrderTraversal<T>(root: Tree<T> | undefined): AsyncGenerator<Tree<T>> {
         if (!root) return;
 
         yield root;
@@ -30,12 +30,12 @@ export default abstract class Tree<T> implements TreeInterface<T> {
         yield* Tree.preOrderTraversal(await root.getRight());
     }
 
-    async *preOrderTraversal(): AsyncGenerator<TreeInterface<T>> {
+    async *preOrderTraversal(): AsyncGenerator<Tree<K>> {
         yield* Tree.preOrderTraversal(this);
     }
 
     //Left, Right, Root
-    static async *postOrderTraversal<T>(root: TreeInterface<T> | undefined): AsyncGenerator<TreeInterface<T>> {
+    static async *postOrderTraversal<T>(root: Tree<T> | undefined): AsyncGenerator<Tree<T>> {
         if (!root) return;
 
         yield* Tree.postOrderTraversal(await root.getLeft());
@@ -43,13 +43,13 @@ export default abstract class Tree<T> implements TreeInterface<T> {
         yield root;
     }
 
-    async *postOrderTraversal(): AsyncGenerator<TreeInterface<T>> {
+    async *postOrderTraversal(): AsyncGenerator<Tree<K>> {
         yield* Tree.postOrderTraversal(this);
     }
 
     //Depth First Traversal
-    static async *depthFirstTraversal<T>(root: TreeInterface<T>): AsyncGenerator<TreeInterface<T>> {
-        const arr: TreeInterface<T>[] = [root];
+    static async *depthFirstTraversal<K>(root: Tree<K>): AsyncGenerator<Tree<K>> {
+        const arr: Tree<K>[] = [root];
         while (arr.length > 0) {
             //LIFO
             const pop = arr.pop()!;
@@ -67,13 +67,13 @@ export default abstract class Tree<T> implements TreeInterface<T> {
         }
     }
 
-    async *depthFirstTraversal(): AsyncGenerator<TreeInterface<T>> {
+    async *depthFirstTraversal(): AsyncGenerator<Tree<K>> {
         yield* Tree.depthFirstTraversal(this);
     }
 
     //Level-order Traversal
-    static async *levelOrderTraversal<T>(root: TreeInterface<T>): AsyncGenerator<TreeInterface<T>> {
-        const arr: TreeInterface<T>[] = [root];
+    static async *levelOrderTraversal<K>(root: Tree<K>): AsyncGenerator<Tree<K>> {
+        const arr: Tree<K>[] = [root];
         while (arr.length > 0) {
             //FIFO
             const pop = arr.shift()!;
@@ -91,13 +91,13 @@ export default abstract class Tree<T> implements TreeInterface<T> {
         }
     }
 
-    async *levelOrderTraversal(): AsyncGenerator<TreeInterface<T>> {
+    async *levelOrderTraversal(): AsyncGenerator<Tree<K>> {
         yield* Tree.levelOrderTraversal(this);
     }
 
     //Iterate Keys
-    async getKeysInOrder(): Promise<T[]> {
-        const promises: Promise<T>[] = [];
+    async getKeysInOrder(): Promise<K[]> {
+        const promises: Promise<K>[] = [];
         for await (const c of this.inOrderTraversal()) {
             promises.push(c.getKey());
         }
@@ -105,8 +105,8 @@ export default abstract class Tree<T> implements TreeInterface<T> {
         return Promise.all(promises);
     }
 
-    async getKeysLevelOrder(): Promise<T[]> {
-        const promises: Promise<T>[] = [];
+    async getKeysLevelOrder(): Promise<K[]> {
+        const promises: Promise<K>[] = [];
         for await (const c of this.levelOrderTraversal()) {
             promises.push(c.getKey());
         }
