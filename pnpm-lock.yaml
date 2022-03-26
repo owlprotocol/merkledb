@@ -32,6 +32,8 @@ importers:
       eslint-plugin-prettier: ^3.4.1
       husky: ^7.0.4
       ipfs: ^0.62.1
+      ipfs-core: ^0.14.1
+      ipfs-http-client: ^56.0.1
       keccak256: ^1.0.6
       lint-staged: ^11.2.6
       lodash: ^4.17.21
@@ -66,6 +68,8 @@ importers:
       eslint-plugin-prettier: 3.4.1_851bc24bb95bfee8fc2681dc386b408c
       husky: 7.0.4
       ipfs: 0.62.1
+      ipfs-core: 0.14.1
+      ipfs-http-client: 56.0.1
       keccak256: 1.0.6
       lint-staged: 11.2.6
       lodash: 4.17.21
@@ -155,6 +159,11 @@ importers:
       vite-plugin-checker: 0.4.4_vite@2.8.6
 
 packages:
+
+  /@achingbrain/node-fetch/2.6.7:
+    resolution: {integrity: sha512-iTASGs+HTFK5E4ZqcMsHmeJ4zodyq8L38lZV33jwqcBJYoUt3HjN4+ot+O9/0b+ke8ddE7UgOtVuZN/OkV19/g==}
+    engines: {node: 4.x || >=6.0.0}
+    dev: true
 
   /@alloc/quick-lru/5.2.0:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
@@ -9916,7 +9925,7 @@ packages:
       merge-options: 3.0.4
       nanoid: 3.3.1
       native-fetch: 3.0.0_@achingbrain+node-fetch@2.6.7
-      node-fetch: '@registry.npmjs.org/@achingbrain/node-fetch/-/node-fetch-2.6.7.tgz'
+      node-fetch: /@achingbrain/node-fetch/2.6.7
       react-native-fetch-api: 2.0.0
       stream-to-it: 0.2.4
     dev: true
@@ -12253,7 +12262,7 @@ packages:
     peerDependencies:
       node-fetch: '*'
     dependencies:
-      node-fetch: '@registry.npmjs.org/@achingbrain/node-fetch/-/node-fetch-2.6.7.tgz'
+      node-fetch: /@achingbrain/node-fetch/2.6.7
     dev: true
 
   /natural-compare/1.4.0:
@@ -16644,10 +16653,3 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
-
-  '@registry.npmjs.org/@achingbrain/node-fetch/-/node-fetch-2.6.7.tgz':
-    resolution: {tarball: https://registry.npmjs.org/@achingbrain/node-fetch/-/node-fetch-2.6.7.tgz}
-    name: '@achingbrain/node-fetch'
-    version: 2.6.7
-    engines: {node: 4.x || >=6.0.0}
-    dev: true
