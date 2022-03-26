@@ -3,7 +3,7 @@ import { ByteView, encode, decode, code } from '@ipld/dag-json';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { IPFS } from 'ipfs';
 import { Digest } from 'multiformats/hashes/digest';
-import TreeSearch from '../TreeSearch';
+import TreeSearch from '../tree/TreeSearch';
 import IPFSTreeIndex from './IPFSTreeIndex';
 
 export interface IPFSTreeData {

@@ -1,7 +1,7 @@
 import { CID } from 'multiformats';
 import IPFSTree from './IPFSTree';
 import IPFSTreeIndex from './IPFSTreeIndex';
-import MapInterface from '../MapInterface';
+import MapInterface from '../interfaces/MapInterface';
 
 export default class IPFSTreeMap extends IPFSTree implements MapInterface<string, CID | undefined> {
     async get(k: string): Promise<CID | undefined> {

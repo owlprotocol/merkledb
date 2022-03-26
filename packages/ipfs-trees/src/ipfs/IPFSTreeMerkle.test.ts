@@ -4,10 +4,10 @@ import keccak256Fn from 'keccak256'; //keccak256
 import { zip } from 'lodash';
 import { MerkleTree } from 'merkletreejs';
 
-import asyncGeneratorToArray from '../../utils/asyncGeneratorToArray';
+import asyncGeneratorToArray from '../utils/asyncGeneratorToArray';
 import IPFSTreeMerkle from './IPFSTreeMerkle';
-import TreeMerkle from '../TreeMerkle';
-import { digestEqual, digestToString, stringToDigest } from '../../utils';
+import TreeMerkle from '../tree/TreeMerkle';
+import { digestEqual, digestToString, stringToDigest } from '../utils';
 
 describe('IPFSTreeMerkle.test.ts', () => {
     //Compare digests by reference?

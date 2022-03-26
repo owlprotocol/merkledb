@@ -1,4 +1,4 @@
-import TreeInterface from './TreeInterface';
+import TreeInterface from '../interfaces/TreeInterface';
 
 export default abstract class Tree<K> implements TreeInterface<K> {
     abstract getKey(): Promise<K>;

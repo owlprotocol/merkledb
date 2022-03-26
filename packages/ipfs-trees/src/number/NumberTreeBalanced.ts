@@ -1,15 +1,15 @@
 import NumberTreeIndex from './NumberTreeIndex';
-import TreeBalanced from '../TreeBalanced';
+import TreeBalanced from '../tree/TreeBalanced';
 
 export default class NumberTreeBalanced extends TreeBalanced<NumberTreeIndex> {
     private readonly key: NumberTreeIndex;
-    private readonly left: TreeBalanced<NumberTreeIndex> | undefined;
-    private readonly right: TreeBalanced<NumberTreeIndex> | undefined;
+    private readonly left: NumberTreeBalanced | undefined;
+    private readonly right: NumberTreeBalanced | undefined;
 
     private constructor(
         key: NumberTreeIndex,
-        left: TreeBalanced<NumberTreeIndex> | undefined,
-        right: TreeBalanced<NumberTreeIndex> | undefined,
+        left: NumberTreeBalanced | undefined,
+        right: NumberTreeBalanced | undefined,
     ) {
         super();
         this.key = key;
@@ -21,8 +21,8 @@ export default class NumberTreeBalanced extends TreeBalanced<NumberTreeIndex> {
     //Pass key by reference
     static create(
         key: NumberTreeIndex,
-        left: TreeBalanced<NumberTreeIndex> | undefined,
-        right: TreeBalanced<NumberTreeIndex> | undefined,
+        left: NumberTreeBalanced | undefined,
+        right: NumberTreeBalanced | undefined,
     ): NumberTreeBalanced {
         return new NumberTreeBalanced(key, left, right);
     }
@@ -32,11 +32,7 @@ export default class NumberTreeBalanced extends TreeBalanced<NumberTreeIndex> {
     }
 
     //Instantiate key
-    static createWithKey(
-        key: number,
-        left: TreeBalanced<NumberTreeIndex> | undefined,
-        right: TreeBalanced<NumberTreeIndex> | undefined,
-    ) {
+    static createWithKey(key: number, left: NumberTreeBalanced | undefined, right: NumberTreeBalanced | undefined) {
         return this.create(NumberTreeIndex.create(key), left, right);
     }
 
@@ -49,13 +45,13 @@ export default class NumberTreeBalanced extends TreeBalanced<NumberTreeIndex> {
         return NumberTreeBalanced.create(key, this.left, this.right);
     }
 
-    async withLeft(left: TreeBalanced<NumberTreeIndex>) {
+    async withLeft(left: NumberTreeBalanced) {
         if (left === this.left) return this;
         const n = NumberTreeBalanced.create(this.key, left, this.right);
         return n;
     }
 
-    async withRight(right: TreeBalanced<NumberTreeIndex>) {
+    async withRight(right: NumberTreeBalanced) {
         if (right === this.right) return this;
         const n = NumberTreeBalanced.create(this.key, this.left, right);
         return n;

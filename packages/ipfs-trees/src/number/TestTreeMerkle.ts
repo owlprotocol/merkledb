@@ -1,4 +1,4 @@
-import TreeMerkle from '../TreeMerkle';
+import TreeMerkle from '../tree/TreeMerkle';
 
 export default class TestTreeMerkle extends TreeMerkle<string> {
     private readonly _hash: string;

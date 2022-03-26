@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import asyncGeneratorToArray from '../../utils/asyncGeneratorToArray';
+import asyncGeneratorToArray from '../utils/asyncGeneratorToArray';
 import TestTreeMerkle from './TestTreeMerkle';
 
 describe('TestTreeMerkle.test.ts', () => {

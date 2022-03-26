@@ -1,4 +1,4 @@
-import Comparable from '../../interfaces/Comparable';
+import Comparable from '../interfaces/Comparable';
 
 export default class NumberTreeIndex implements Comparable<number> {
     v: number;

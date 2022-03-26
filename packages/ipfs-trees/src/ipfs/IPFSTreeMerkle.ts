@@ -4,8 +4,8 @@ import { ByteView, encode, decode, code } from '@ipld/dag-json';
 import { keccak256 } from '@multiformats/sha3';
 import { Digest } from 'multiformats/hashes/digest';
 import { IPFS } from 'ipfs';
-import TreeMerkle from '../TreeMerkle';
-import { digestToString } from '../../utils';
+import TreeMerkle from '../tree/TreeMerkle';
+import { digestToString } from '../utils';
 
 export interface IPFSTreeMerkleData {
     hash: Digest<18, number>;

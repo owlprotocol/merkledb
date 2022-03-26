@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 import { uniq, sortBy, zip } from 'lodash';
-import asyncGeneratorToArray from '../../utils/asyncGeneratorToArray';
+import asyncGeneratorToArray from '../utils/asyncGeneratorToArray';
 import NumberTree from './NumberTree';
 import NumberTreeIndex from './NumberTreeIndex';
 

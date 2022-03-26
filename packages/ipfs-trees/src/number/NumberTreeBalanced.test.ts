@@ -22,6 +22,7 @@ describe('NumberTreeBalanced.test.ts', () => {
              *    node1
              */
             let tree = await NumberTree.insert(undefined, NumberTree.createLeafWithKey(0));
+            //@ts-expect-error
             tree = await tree.insert(NumberTree.createLeafWithKey(1));
 
             //Verify level-order traversal
