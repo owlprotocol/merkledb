@@ -138,6 +138,27 @@ export default class IPFSTreeMerkle extends TreeMerkle<Digest<18, number>> {
         return this._rightCID;
     }
 
+    //Proof
+    async *getProof(): AsyncGenerator<Digest<18, number>> {
+        for await (const s of this.recurseSibling()) {
+            yield await s.getHash();
+        }
+    }
+
+    async verifyProof(proof: Iterable<Digest<18, number>>): Promise<boolean> {
+        let digest: Digest<18, number> | undefined;
+        for (const s of proof) {
+            if (!digest) digest = s;
+            else digest = await IPFSTreeMerkle.joinDigests(digest, s);
+        }
+
+        const buff = Buffer.from(digest!.digest.buffer);
+
+        const rootHash = await this.getHash();
+        const rootBuff = Buffer.from(rootHash.digest.buffer);
+        return rootBuff.compare(buff) == 0;
+    }
+
     //IPFS
     async encode(): Promise<ByteView<IPFSTreeMerkleData>> {
         if (this._encodeCache) return this._encodeCache;
