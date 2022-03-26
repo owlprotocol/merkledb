@@ -5,17 +5,17 @@ import Comparable from '../interfaces/Comparable';
 import { Digest } from 'multiformats/hashes/digest';
 import IPFSSingleton from './IPFSSingleton';
 
-export interface IPFSTreeIndexData {
+export interface IPFSTreeKeyData {
     key: string;
     valueCID?: CID;
 }
 
-export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
+export default class IPFSTreeKey implements Comparable<IPFSTreeKey> {
     readonly key: string;
     readonly valueCID: CID | undefined;
 
     //memoization
-    private _encodeCache: ByteView<IPFSTreeIndexData> | undefined;
+    private _encodeCache: ByteView<IPFSTreeKeyData> | undefined;
     private _digestCache: Digest<18, number> | undefined;
     private _cidCache: CID | undefined;
 
@@ -27,24 +27,24 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
     }
 
     //Factory
-    static create(key: string, valueCID: CID | undefined): IPFSTreeIndex {
-        return new IPFSTreeIndex(key, valueCID);
+    static create(key: string, valueCID: CID | undefined): IPFSTreeKey {
+        return new IPFSTreeKey(key, valueCID);
     }
 
-    static async createFromCID(cid: CID): Promise<IPFSTreeIndex> {
+    static async createFromCID(cid: CID): Promise<IPFSTreeKey> {
         const data = await IPFSSingleton.get(cid);
-        return IPFSTreeIndex.decode(data);
+        return IPFSTreeKey.decode(data);
     }
 
-    equals(a: IPFSTreeIndex): boolean {
+    equals(a: IPFSTreeKey): boolean {
         return this.key === a.key;
     }
 
     //Implement proper string compare
-    lt(a: IPFSTreeIndex): boolean {
+    lt(a: IPFSTreeKey): boolean {
         return this.key < a.key;
     }
-    gt(a: IPFSTreeIndex): boolean {
+    gt(a: IPFSTreeKey): boolean {
         return !this.equals(a) && !this.lt(a);
     }
     isNullNode(): boolean {
@@ -52,11 +52,11 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
     }
 
     //IPFS
-    encode(): ByteView<IPFSTreeIndexData> {
+    encode(): ByteView<IPFSTreeKeyData> {
         if (this._encodeCache) return this._encodeCache;
 
         //Data
-        const data: IPFSTreeIndexData = {
+        const data: IPFSTreeKeyData = {
             key: this.key,
         };
         if (this.valueCID) data.valueCID = this.valueCID;
@@ -65,10 +65,10 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
         return this._encodeCache;
     }
 
-    static decode(data: ByteView<IPFSTreeIndexData>): IPFSTreeIndex {
+    static decode(data: ByteView<IPFSTreeKeyData>): IPFSTreeKey {
         //Decode
         const { key, valueCID } = decode(data);
-        return IPFSTreeIndex.create(key, valueCID);
+        return IPFSTreeKey.create(key, valueCID);
     }
 
     async digest(): Promise<Digest<18, number>> {

@@ -6,7 +6,7 @@ import { IPFS } from 'ipfs';
 import { Digest } from 'multiformats/hashes/digest';
 
 import TreeSearch from '../tree/TreeSearch';
-import IPFSTreeIndex from './IPFSTreeIndex';
+import IPFSTreeKey from './IPFSTreeKey';
 import IPFSMapInterface from '../interfaces/IPFSMapInterface';
 import IPFSSingleton from './IPFSSingleton';
 
@@ -16,10 +16,10 @@ export interface IPFSTreeData {
     rightCID?: CID;
 }
 
-export default class IPFSTree extends TreeSearch<IPFSTreeIndex> implements IPFSMapInterface {
-    private readonly _key: IPFSTreeIndex | undefined;
-    private readonly _left: TreeSearch<IPFSTreeIndex> | undefined;
-    private readonly _right: TreeSearch<IPFSTreeIndex> | undefined;
+export default class IPFSTree extends TreeSearch<IPFSTreeKey> implements IPFSMapInterface {
+    private readonly _key: IPFSTreeKey | undefined;
+    private readonly _left: TreeSearch<IPFSTreeKey> | undefined;
+    private readonly _right: TreeSearch<IPFSTreeKey> | undefined;
 
     private readonly _keyCID: CID | undefined;
     private readonly _leftCID: CID | undefined;
@@ -31,9 +31,9 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> implements IPFSM
     private _cidCache: CID | undefined;
 
     protected constructor(
-        key: IPFSTreeIndex | undefined,
-        left: TreeSearch<IPFSTreeIndex> | undefined,
-        right: TreeSearch<IPFSTreeIndex> | undefined,
+        key: IPFSTreeKey | undefined,
+        left: TreeSearch<IPFSTreeKey> | undefined,
+        right: TreeSearch<IPFSTreeKey> | undefined,
         keyCID: CID | undefined,
         leftCID: CID | undefined,
         rightCID: CID | undefined,
@@ -54,7 +54,7 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> implements IPFSM
 
     //Get/Set KV
     async get(k: string): Promise<CID | undefined> {
-        const resultNode = await this.search(IPFSTreeIndex.create(k, undefined));
+        const resultNode = await this.search(IPFSTreeKey.create(k, undefined));
         if (!resultNode) return undefined;
 
         const resultIdx = await resultNode.getKey();
@@ -86,9 +86,9 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> implements IPFSM
 
     //Factory
     static create(
-        key: IPFSTreeIndex,
-        left: TreeSearch<IPFSTreeIndex> | undefined,
-        right: TreeSearch<IPFSTreeIndex> | undefined,
+        key: IPFSTreeKey,
+        left: TreeSearch<IPFSTreeKey> | undefined,
+        right: TreeSearch<IPFSTreeKey> | undefined,
     ): IPFSTree {
         return new IPFSTree(key, left, right, undefined, undefined, undefined);
     }
@@ -97,7 +97,7 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> implements IPFSM
         return new IPFSTree(undefined, undefined, undefined, keyCID, leftCID, rightCID);
     }
 
-    static createLeaf(key: IPFSTreeIndex): IPFSTree {
+    static createLeaf(key: IPFSTreeKey): IPFSTree {
         return this.create(key, undefined, undefined);
     }
 
@@ -105,10 +105,10 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> implements IPFSM
     static createWithKey(
         key: string,
         valueCID: CID | undefined,
-        left: TreeSearch<IPFSTreeIndex> | undefined,
-        right: TreeSearch<IPFSTreeIndex> | undefined,
+        left: TreeSearch<IPFSTreeKey> | undefined,
+        right: TreeSearch<IPFSTreeKey> | undefined,
     ) {
-        return this.create(IPFSTreeIndex.create(key, valueCID), left, right);
+        return this.create(IPFSTreeKey.create(key, valueCID), left, right);
     }
 
     static createLeafWithKey(key: string, valueCID: CID | undefined) {
@@ -116,18 +116,18 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> implements IPFSM
     }
 
     //Factory helpers that ALWAYS create a copy
-    async withKey(key: IPFSTreeIndex) {
+    async withKey(key: IPFSTreeKey) {
         if (!this._key) throw new Error('Node has no key!');
         return IPFSTree.create(key, this._left, this._right);
     }
 
-    async withLeft(left: TreeSearch<IPFSTreeIndex>) {
+    async withLeft(left: TreeSearch<IPFSTreeKey>) {
         if (!this._key) throw new Error('Node has no key!');
         const n = IPFSTree.create(this._key, left, this._right);
         return n;
     }
 
-    async withRight(right: TreeSearch<IPFSTreeIndex>) {
+    async withRight(right: TreeSearch<IPFSTreeKey>) {
         if (!this._key) throw new Error('Node has no key!');
         const n = IPFSTree.create(this._key, this._left, right);
         return n;
@@ -140,28 +140,28 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> implements IPFSM
     }
 
     //Getters
-    async getKey(): Promise<IPFSTreeIndex> {
+    async getKey(): Promise<IPFSTreeKey> {
         if (this._key) return this._key;
 
         //@ts-expect-error
-        this._key = await IPFSTreeIndex.createFromCID(this._keyCID);
+        this._key = await IPFSTreeKey.createFromCID(this._keyCID);
         return this._key;
     }
-    async getLeft(): Promise<TreeSearch<IPFSTreeIndex> | undefined> {
+    async getLeft(): Promise<TreeSearch<IPFSTreeKey> | undefined> {
         if (this._left) return this._left;
         if (!this._leftCID) return undefined;
 
         //@ts-expect-error
         this._left = await IPFSTree.createFromCID(this._leftCID);
-        return this._left as TreeSearch<IPFSTreeIndex>;
+        return this._left as TreeSearch<IPFSTreeKey>;
     }
-    async getRight(): Promise<TreeSearch<IPFSTreeIndex> | undefined> {
+    async getRight(): Promise<TreeSearch<IPFSTreeKey> | undefined> {
         if (this._right) return this._right;
         if (!this._rightCID) return undefined;
 
         //@ts-expect-error
         this._right = await IPFSTree.createFromCID(this._rightCID);
-        return this._right as TreeSearch<IPFSTreeIndex>;
+        return this._right as TreeSearch<IPFSTreeKey>;
     }
 
     async getKeyCID(): Promise<CID> {

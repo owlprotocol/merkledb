@@ -35,7 +35,7 @@ export default class IPFSMerkleMap implements IPFSMapInterface {
     cid(): Promise<CID> {
         throw new Error('Method not implemented.');
     }
-    putAll(): AsyncGenerator<CID, any, unknown> {
+    putAll(): AsyncGenerator<{ node: Promise<CID>; key: Promise<CID | undefined> }> {
         throw new Error('Method not implemented.');
     }
 

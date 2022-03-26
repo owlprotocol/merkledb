@@ -6,7 +6,7 @@ import { encode, code } from '@ipld/dag-json';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { uniq, sortBy } from 'lodash';
 import IPFSTree from './IPFSTree';
-import IPFSTreeIndex from './IPFSTreeIndex';
+import IPFSTreeKey from './IPFSTreeKey';
 import IPFSSingleton from './IPFSSingleton';
 
 describe('IPFSTree.test.ts', () => {
@@ -57,7 +57,7 @@ describe('IPFSTree.test.ts', () => {
 
         it('withKey()', async () => {
             const node0 = await IPFSTree.createLeafWithKey('0', cid);
-            const node1 = await node0.withKey(IPFSTreeIndex.create('1', cid));
+            const node1 = await node0.withKey(IPFSTreeKey.create('1', cid));
 
             const key = await node1.getKey();
             assert.equal(key.key, '1');
@@ -69,7 +69,7 @@ describe('IPFSTree.test.ts', () => {
 
         it('withLeft()', async () => {
             const node0 = IPFSTree.createLeafWithKey('0', cid);
-            const node1 = await node0.withKey(IPFSTreeIndex.create('1', cid));
+            const node1 = await node0.withKey(IPFSTreeKey.create('1', cid));
             const node0v2 = await node0.withLeft(node1);
 
             const key0 = await node0.getKey();
@@ -137,23 +137,23 @@ describe('IPFSTree.test.ts', () => {
 
     describe('search', () => {
         it('root', async () => {
-            const searchResult = await tree.search(IPFSTreeIndex.create('3', cid));
+            const searchResult = await tree.search(IPFSTreeKey.create('3', cid));
             const searchResultContent = await searchResult!.getKey();
 
-            assert.isTrue(searchResultContent.equals(IPFSTreeIndex.create('3', cid)));
+            assert.isTrue(searchResultContent.equals(IPFSTreeKey.create('3', cid)));
             assert.equal(searchResult, node3);
         });
 
         it('leaf', async () => {
-            const searchResult = await tree.search(IPFSTreeIndex.create('1', cid));
+            const searchResult = await tree.search(IPFSTreeKey.create('1', cid));
             const searchResultContent = await searchResult!.getKey();
 
-            assert.isTrue(searchResultContent.equals(IPFSTreeIndex.create('1', cid)));
+            assert.isTrue(searchResultContent.equals(IPFSTreeKey.create('1', cid)));
             assert.equal(searchResult, node1);
         });
 
         it('not found!', async () => {
-            const searchResult = await tree.search(IPFSTreeIndex.create('0', cid));
+            const searchResult = await tree.search(IPFSTreeKey.create('0', cid));
             assert.isUndefined(searchResult);
         });
 
@@ -194,7 +194,7 @@ describe('IPFSTree.test.ts', () => {
                 const node2 = await IPFSTree.createLeafWithKey('2', cid).withRight(node3);
                 const node1 = await IPFSTree.createLeafWithKey('1', cid).withRight(node2);
                 const node0 = await IPFSTree.createLeafWithKey('0', cid).withRight(node1);
-                const searchResult1 = await node0.search(IPFSTreeIndex.create('3', cid));
+                const searchResult1 = await node0.search(IPFSTreeKey.create('3', cid));
                 const searchResult1Key = await searchResult1?.getKey();
                 assert.equal(searchResult1Key?.key, '3', 'searchResult1.key');
 
@@ -208,7 +208,7 @@ describe('IPFSTree.test.ts', () => {
                 assert.equal(IPFSSingleton._totalNetworkPut, 4, 'IPFSTreeIndex._totalNetworkPut');
 
                 const node0Load = await IPFSTree.createFromCID(await node0.cid());
-                const searchResult2 = await node0Load.search(IPFSTreeIndex.create('3', cid));
+                const searchResult2 = await node0Load.search(IPFSTreeKey.create('3', cid));
                 const searchResult2Key = await searchResult2?.getKey();
                 assert.equal(searchResult2Key?.key, '3', 'searchResult1.key');
 
