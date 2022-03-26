@@ -8,7 +8,7 @@ import {
     encode as encodeCBOR,
     decode as decodeCBOR,
     code as codeCBOR,
-} from '@ipld/dag-json';
+} from '@ipld/dag-cbor';
 //@ts-expect-error
 import { keccak256 } from '@multiformats/sha3';
 import IPFSMapInterface from '../interfaces/IPFSMapInterface';

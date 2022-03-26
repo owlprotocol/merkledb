@@ -1,12 +1,12 @@
 import { IPFS } from 'ipfs';
-import { encode as encodeJSON, decode as decodeJSON, code as codeJSON } from '@ipld/dag-json';
+import { encode as encodeJSON, decode as decodeJSON, code as codeJSON } from '@ipld/dag-cbor';
 import { encode as encodeCBOR, decode as decodeCBOR, code as codeCBOR } from '@ipld/dag-cbor';
 import { CID } from 'multiformats';
 import { sha256 } from 'multiformats/hashes/sha2';
 
 interface PutOptions {
     version?: 0 | 1;
-    format?: 'dag-json' | 'dag-cbor';
+    format?: 'dag-cbor' | 'dag-cbor';
 }
 
 export default class IPFSSingleton {
@@ -31,7 +31,7 @@ export default class IPFSSingleton {
         if (!options || options.version == 0) {
             //dag-pb
             cid = CID.create(0, 112, digest);
-        } else if (options.format == 'dag-json') {
+        } else if (options.format == 'dag-cbor') {
             cid = CID.create(1, codeJSON, digest);
         } else if (options.format == 'dag-cbor') {
             cid = CID.create(1, codeCBOR, digest);
@@ -44,7 +44,7 @@ export default class IPFSSingleton {
 
     public static async putJSON(rec: Record<string, any>) {
         const data = encodeJSON(rec);
-        if (this.ipfs) return this.ipfs.block.put(data, { version: 1, format: 'dag-json' });
+        if (this.ipfs) return this.ipfs.block.put(data, { version: 1, format: 'dag-cbor' });
 
         //Mock IPFS Storage
         const digest = await sha256.digest(data);

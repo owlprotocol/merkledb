@@ -1,6 +1,7 @@
 //@ts-nocheck
 import { CID } from 'multiformats';
-import { ByteView, encode as encodeJSON, decode as decodeJSON, code as codeJSON } from '@ipld/dag-json';
+//import { ByteView, encode as encodeJSON, decode as decodeJSON, code as codeJSON } from '@ipld/dag-cbor';
+import { ByteView, encode as encodeJSON, decode as decodeJSON, code as codeJSON } from '@ipld/dag-cbor';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { Digest } from 'multiformats/hashes/digest';
 
@@ -291,7 +292,7 @@ export default class IPFSTree extends TreeSearch<IPFSTreeKey> implements IPFSMap
     //Put
     async put(): Promise<CID> {
         const data = await this.encode();
-        const cid = IPFSSingleton.put(data, { version: 1, format: 'dag-json' });
+        const cid = IPFSSingleton.put(data, { version: 1, format: 'dag-cbor' });
         return cid;
     }
 

@@ -1,4 +1,4 @@
-import { encode, decode } from '@ipld/dag-json'
+import { encode, decode } from '@ipld/dag-cbor'
 import { CID } from 'multiformats'
 
 const obj = {

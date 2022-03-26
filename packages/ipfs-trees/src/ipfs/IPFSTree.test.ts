@@ -2,7 +2,7 @@ import { create as createIPFS, IPFS } from 'ipfs';
 import { existsSync, rmSync } from 'fs';
 import { CID } from 'multiformats';
 import { assert } from 'chai';
-import { encode, code } from '@ipld/dag-json';
+import { encode, code } from '@ipld/dag-cbor';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { uniq, sortBy } from 'lodash';
 import IPFSTree from './IPFSTree';

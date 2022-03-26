@@ -1,4 +1,4 @@
-import { code, encode } from '@ipld/dag-json';
+import { code, encode } from '@ipld/dag-cbor';
 import { assert } from 'chai';
 import { CID } from 'multiformats';
 import { sha256 } from 'multiformats/hashes/sha2';

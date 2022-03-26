@@ -1,5 +1,5 @@
 import { CID } from 'multiformats';
-import { ByteView, encode, decode, code } from '@ipld/dag-json';
+import { ByteView, encode, decode, code } from '@ipld/dag-cbor';
 //@ts-expect-error
 import { keccak256 } from '@multiformats/sha3';
 import { sha256 } from 'multiformats/hashes/sha2';
@@ -244,7 +244,7 @@ export default class IPFSMerkle extends TreeMerkle<Digest<18, number>> implement
     async put(): Promise<CID> {
         if (this.isNull()) throw new Error('null.put()')
         const data = await this.encode();
-        const cid = await IPFSSingleton.put(data, { version: 1, format: 'dag-json' });
+        const cid = await IPFSSingleton.put(data, { version: 1, format: 'dag-cbor' });
         return cid;
     }
 }

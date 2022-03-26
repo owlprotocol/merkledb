@@ -52,6 +52,7 @@
     "husky": "^7.0.4",
     "ipfs": "^0.62.1",
     "ipfs-core": "^0.14.1",
+    "ipfs-http-client": "^56.0.1",
     "keccak256": "^1.0.6",
     "lint-staged": "^11.2.6",
     "lodash": "^4.17.21",

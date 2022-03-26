@@ -1,5 +1,5 @@
 import { CID } from 'multiformats';
-import { ByteView, encode, decode, code } from '@ipld/dag-json';
+import { ByteView, encode, decode, code } from '@ipld/dag-cbor';
 import { sha256 } from 'multiformats/hashes/sha2';
 import Comparable from '../interfaces/Comparable';
 import { Digest } from 'multiformats/hashes/digest';
@@ -97,7 +97,7 @@ export default class IPFSTreeKey implements Comparable<IPFSTreeKey> {
     //Put Data
     async put(): Promise<CID> {
         const data = await this.encode();
-        const cid = await IPFSSingleton.put(data, { version: 1, format: 'dag-json' });
+        const cid = await IPFSSingleton.put(data, { version: 1, format: 'dag-cbor' });
         return cid;
     }
 }
