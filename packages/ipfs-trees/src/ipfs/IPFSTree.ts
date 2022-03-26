@@ -1,10 +1,14 @@
 import { CID } from 'multiformats';
-import { ByteView, encode, decode, code } from '@ipld/dag-json';
+import { ByteView, encode as encodeJSON, decode as decodeJSON, code as codeJSON } from '@ipld/dag-json';
+import { encode as encodeCBOR, decode as decodeCBOR, code as codeCBOR } from '@ipld/dag-json';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { IPFS } from 'ipfs';
 import { Digest } from 'multiformats/hashes/digest';
+
 import TreeSearch from '../tree/TreeSearch';
 import IPFSTreeIndex from './IPFSTreeIndex';
+import IPFSMapInterface from '../interfaces/IPFSMapInterface';
+import IPFSSingleton from './IPFSSingleton';
 
 export interface IPFSTreeData {
     keyCID: CID;
@@ -12,7 +16,7 @@ export interface IPFSTreeData {
     rightCID?: CID;
 }
 
-export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
+export default class IPFSTree extends TreeSearch<IPFSTreeIndex> implements IPFSMapInterface {
     private readonly _key: IPFSTreeIndex | undefined;
     private readonly _left: TreeSearch<IPFSTreeIndex> | undefined;
     private readonly _right: TreeSearch<IPFSTreeIndex> | undefined;
@@ -25,17 +29,6 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
     private _encodeCache: ByteView<IPFSTreeData> | undefined;
     private _digestCache: Digest<18, number> | undefined;
     private _cidCache: CID | undefined;
-
-    //IPFS Client
-    private static _ipfs: IPFS;
-    //Development Stats
-    static _totalNetworkGet = 0;
-    static _totalNetworkPut = 0;
-
-    static setIPFS(ipfs: IPFS) {
-        this._ipfs = ipfs;
-        IPFSTreeIndex.setIPFS(ipfs);
-    }
 
     protected constructor(
         key: IPFSTreeIndex | undefined,
@@ -52,6 +45,43 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
         this._keyCID = keyCID;
         this._leftCID = leftCID;
         this._rightCID = rightCID;
+    }
+
+    //Map
+    static createNull(): IPFSTree {
+        return IPFSTree.createLeafWithKey('0', undefined);
+    }
+
+    //Get/Set KV
+    async get(k: string): Promise<CID | undefined> {
+        const resultNode = await this.search(IPFSTreeIndex.create(k, undefined));
+        if (!resultNode) return undefined;
+
+        const resultIdx = await resultNode.getKey();
+        return resultIdx.valueCID;
+    }
+    async set(k: string, v: CID | undefined): Promise<IPFSTree> {
+        const leafNode = IPFSTree.createLeafWithKey(k, v);
+        const tree = await this.insert(leafNode);
+        return tree as IPFSTree;
+    }
+    async getJSON(k: string): Promise<Record<string, any> | undefined> {
+        const cid = await this.get(k);
+        if (!cid) return undefined;
+        return IPFSSingleton.getJSON(cid);
+    }
+    async setJSON(k: string, v: Record<string, any>): Promise<IPFSTree> {
+        const cid = await IPFSSingleton.putJSON(v);
+        return await this.set(k, cid);
+    }
+    async getCBOR(k: string): Promise<Record<string, any> | undefined> {
+        const cid = await this.get(k);
+        if (!cid) return undefined;
+        return IPFSSingleton.getCBOR(cid);
+    }
+    async setCBOR(k: string, v: Record<string, any>): Promise<IPFSTree> {
+        const cid = await IPFSSingleton.putCBOR(v);
+        return await this.set(k, cid);
     }
 
     //Factory
@@ -85,33 +115,27 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
         return this.createWithKey(key, valueCID, undefined, undefined);
     }
 
+    //Factory helpers that ALWAYS create a copy
     async withKey(key: IPFSTreeIndex) {
         if (!this._key) throw new Error('Node has no key!');
-
-        if (key.equals(this._key)) return this;
         return IPFSTree.create(key, this._left, this._right);
     }
 
     async withLeft(left: TreeSearch<IPFSTreeIndex>) {
         if (!this._key) throw new Error('Node has no key!');
-
-        if (left === this._left) return this;
         const n = IPFSTree.create(this._key, left, this._right);
         return n;
     }
 
     async withRight(right: TreeSearch<IPFSTreeIndex>) {
         if (!this._key) throw new Error('Node has no key!');
-
-        if (right === this._right) return this;
         const n = IPFSTree.create(this._key, this._left, right);
         return n;
     }
 
     //Async Factory
     static async createFromCID(cid: CID): Promise<IPFSTree> {
-        IPFSTree._totalNetworkGet += 1;
-        const data = await IPFSTree._ipfs.block.get(cid);
+        const data = await IPFSSingleton.get(cid);
         return IPFSTree.decode(data);
     }
 
@@ -178,13 +202,13 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
         if (leftCID) data.leftCID = leftCID;
         if (rightCID) data.rightCID = rightCID;
         //Encode
-        this._encodeCache = encode(data);
+        this._encodeCache = encodeJSON(data);
         return this._encodeCache;
     }
 
     static decode(data: ByteView<IPFSTreeData>): IPFSTree {
         //Decode
-        const { keyCID, leftCID, rightCID } = decode(data);
+        const { keyCID, leftCID, rightCID } = decodeJSON(data);
         const n = IPFSTree.createWithCIDs(keyCID, leftCID, rightCID);
         return n;
     }
@@ -198,14 +222,14 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
     async cid(): Promise<CID> {
         if (this._cidCache) return this._cidCache;
         const hash = await this.digest();
-        this._cidCache = CID.create(1, code, hash);
+        this._cidCache = CID.create(1, codeJSON, hash);
         return this._cidCache;
     }
 
+    //Put
     async put(): Promise<CID> {
-        IPFSTree._totalNetworkPut += 1;
         const data = await this.encode();
-        const cid = await IPFSTree._ipfs.block.put(data, { version: 1, format: 'dag-json' });
+        const cid = await IPFSSingleton.put(data, { version: 1, format: 'dag-json' });
         return cid;
     }
 
@@ -216,5 +240,13 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> {
         };
         if (this._key) promises.key = this._key.put();
         return promises;
+    }
+
+    async *putAll(): AsyncGenerator<CID> {
+        for await (const n of this.inOrderTraversal()) {
+            const x = (n as IPFSTree).putWithKey();
+            await x.key;
+            yield await x.node;
+        }
     }
 }

@@ -7,6 +7,7 @@ import { sha256 } from 'multiformats/hashes/sha2';
 import { uniq, sortBy } from 'lodash';
 import IPFSTree from './IPFSTree';
 import IPFSTreeIndex from './IPFSTreeIndex';
+import IPFSSingleton from './IPFSSingleton';
 
 describe('IPFSTree.test.ts', () => {
     let cid: CID;
@@ -103,11 +104,9 @@ describe('IPFSTree.test.ts', () => {
                 ipfs = await createIPFS({
                     repo: './ipfs',
                 });
-                IPFSTree.setIPFS(ipfs);
-                IPFSTree._totalNetworkGet = 0;
-                IPFSTree._totalNetworkPut = 0;
-                IPFSTreeIndex._totalNetworkGet = 0;
-                IPFSTreeIndex._totalNetworkPut = 0;
+                IPFSSingleton.setIPFS(ipfs);
+                IPFSSingleton._totalNetworkGet = 0;
+                IPFSSingleton._totalNetworkPut = 0;
             });
 
             afterEach(async () => {
@@ -120,17 +119,17 @@ describe('IPFSTree.test.ts', () => {
             it('put/get()', async () => {
                 const node0 = IPFSTree.createLeafWithKey('0', cid);
                 const node0CID = await node0.put();
-                assert.equal(IPFSTree._totalNetworkPut, 1, 'IPFSTree._totalNetworkPut');
+                assert.equal(IPFSSingleton._totalNetworkPut, 1, 'IPFSTree._totalNetworkPut');
 
                 const node0FromCID = await IPFSTree.createFromCID(node0CID);
-                assert.equal(IPFSTree._totalNetworkGet, 1, 'IPFSTree._totalNetworkGet');
+                assert.equal(IPFSSingleton._totalNetworkGet, 1, 'IPFSTree._totalNetworkGet');
 
                 const node0Key = await node0.getKey();
                 await node0Key.put();
-                assert.equal(IPFSTreeIndex._totalNetworkPut, 1, 'IPFSTreeIndex._totalNetworkPut');
+                assert.equal(IPFSSingleton._totalNetworkPut, 1, 'IPFSTreeIndex._totalNetworkPut');
 
                 const node0FromCIDKey = await node0FromCID.getKey();
-                assert.equal(IPFSTreeIndex._totalNetworkGet, 1, 'IPFSTreeIndex._totalNetworkGet');
+                assert.equal(IPFSSingleton._totalNetworkGet, 1, 'IPFSTreeIndex._totalNetworkGet');
                 assert.isTrue(node0FromCIDKey.equals(node0Key), 'node0FromCIDKey.key != node0.key');
             });
         });
@@ -169,10 +168,8 @@ describe('IPFSTree.test.ts', () => {
                 ipfs = await createIPFS({
                     repo: './ipfs',
                 });
-                IPFSTree.setIPFS(ipfs);
-                IPFSTree._totalNetworkGet = 0;
-                IPFSTree._totalNetworkPut = 0;
-                IPFSTreeIndex._totalNetworkGet = 0;
+                IPFSSingleton.setIPFS(ipfs);
+                IPFSSingleton._totalNetworkGet = 0;
                 IPFSTreeIndex._totalNetworkPut = 0;
             });
 
@@ -207,16 +204,16 @@ describe('IPFSTree.test.ts', () => {
                 const { node: node3P, key: key3P } = node3.putWithKey();
                 await Promise.all([node0P, key0P, node1P, key1P, node2P, key2P, node3P, key3P]);
 
-                assert.equal(IPFSTree._totalNetworkPut, 4, 'IPFSTreeIndex._totalNetworkPut');
-                assert.equal(IPFSTreeIndex._totalNetworkPut, 4, 'IPFSTreeIndex._totalNetworkPut');
+                assert.equal(IPFSSingleton._totalNetworkPut, 4, 'IPFSTreeIndex._totalNetworkPut');
+                assert.equal(IPFSSingleton._totalNetworkPut, 4, 'IPFSTreeIndex._totalNetworkPut');
 
                 const node0Load = await IPFSTree.createFromCID(await node0.cid());
                 const searchResult2 = await node0Load.search(IPFSTreeIndex.create('3', cid));
                 const searchResult2Key = await searchResult2?.getKey();
                 assert.equal(searchResult2Key?.key, '3', 'searchResult1.key');
 
-                assert.equal(IPFSTree._totalNetworkGet, 4, 'IPFSTreeIndex._totalNetworkGet');
-                assert.equal(IPFSTreeIndex._totalNetworkGet, 4, 'IPFSTreeIndex._totalNetworkGet');
+                assert.equal(IPFSSingleton._totalNetworkGet, 4, 'IPFSTreeIndex._totalNetworkGet');
+                assert.equal(IPFSSingleton._totalNetworkGet, 4, 'IPFSTreeIndex._totalNetworkGet');
             });
         });
 

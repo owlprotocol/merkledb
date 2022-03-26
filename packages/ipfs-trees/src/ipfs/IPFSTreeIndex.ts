@@ -7,7 +7,7 @@ import { IPFS } from 'ipfs';
 
 export interface IPFSTreeIndexData {
     key: string;
-    valueCID: CID | undefined;
+    valueCID?: CID;
 }
 
 export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
@@ -69,7 +69,6 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
         //Data
         const data: IPFSTreeIndexData = {
             key: this.key,
-            valueCID: undefined,
         };
         if (this.valueCID) data.valueCID = this.valueCID;
         //Encode
@@ -96,6 +95,7 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
         return this._cidCache;
     }
 
+    //Put Data
     async put(): Promise<CID> {
         IPFSTreeIndex._totalNetworkPut += 1;
         const data = await this.encode();

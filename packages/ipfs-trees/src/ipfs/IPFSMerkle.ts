@@ -5,7 +5,8 @@ import { keccak256 } from '@multiformats/sha3';
 import { Digest } from 'multiformats/hashes/digest';
 import { IPFS } from 'ipfs';
 import TreeMerkle from '../tree/TreeMerkle';
-import { digestToString } from '../utils';
+import { stringToDigest } from '../utils';
+import IPFSMerkleInterface from '../interfaces/IPFSMerkleInterface';
 
 export interface IPFSTreeMerkleData {
     hash: Digest<18, number>;
@@ -13,7 +14,7 @@ export interface IPFSTreeMerkleData {
     rightCID?: CID | undefined;
 }
 
-export default class IPFSTreeMerkle extends TreeMerkle<Digest<18, number>> {
+export default class IPFSTreeMerkle extends TreeMerkle<Digest<18, number>> implements IPFSMerkleInterface {
     private readonly _hash: Digest<18, number>;
     private readonly _parent: IPFSTreeMerkle | undefined;
     private readonly _left: IPFSTreeMerkle | undefined;
@@ -51,6 +52,10 @@ export default class IPFSTreeMerkle extends TreeMerkle<Digest<18, number>> {
         this._rightCID = _rightCID;
     }
 
+    static async createNull(): Promise<IPFSTreeMerkle> {
+        return IPFSTreeMerkle.createLeaf(await stringToDigest('0'));
+    }
+
     static async createLeaf(hash: Digest<18, number>): Promise<IPFSTreeMerkle> {
         return new IPFSTreeMerkle(hash, undefined, undefined, undefined, undefined, undefined);
     }
@@ -61,6 +66,11 @@ export default class IPFSTreeMerkle extends TreeMerkle<Digest<18, number>> {
         rightCID: CID | undefined,
     ): IPFSTreeMerkle {
         return new IPFSTreeMerkle(hash, undefined, undefined, undefined, leftCID, rightCID);
+    }
+
+    async insertHash(hash: Digest<18, number>): Promise<IPFSTreeMerkle> {
+        const leaf = await IPFSTreeMerkle.createLeaf(hash);
+        return TreeMerkle.insert(this, leaf) as Promise<IPFSTreeMerkle>;
     }
 
     async getParent(): Promise<TreeMerkle<Digest<18, number>> | undefined> {

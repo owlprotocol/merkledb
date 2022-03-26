@@ -54,9 +54,12 @@ export default abstract class TreeSearch<K extends Comparable<any>> extends Tree
             return;
         }
 
-        //Duplicate
-        if ((await a.getKey()).equals(await root.getKey())) {
-            yield root;
+        //Overwrite
+        const aKey = await a.getKey();
+        const rootKey = await root.getKey();
+        if (aKey.equals(rootKey)) {
+            //New key
+            yield (await root.withKey(aKey!)) as T;
             return;
         }
 
