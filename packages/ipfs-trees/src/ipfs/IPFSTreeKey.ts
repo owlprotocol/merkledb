@@ -31,6 +31,16 @@ export default class IPFSTreeKey implements Comparable<IPFSTreeKey> {
         return new IPFSTreeKey(key, valueCID);
     }
 
+    static async createJSON(key: string, value: Record<string, any>): Promise<IPFSTreeKey> {
+        const cid = await IPFSSingleton.putJSON(value);
+        return IPFSTreeKey.create(key, cid);
+    }
+
+    static async createCBOR(key: string, value: Record<string, any>): Promise<IPFSTreeKey> {
+        const cid = await IPFSSingleton.putCBOR(value);
+        return IPFSTreeKey.create(key, cid);
+    }
+
     static async createFromCID(cid: CID): Promise<IPFSTreeKey> {
         const data = await IPFSSingleton.get(cid);
         return IPFSTreeKey.decode(data);

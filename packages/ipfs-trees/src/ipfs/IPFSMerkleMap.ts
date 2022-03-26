@@ -32,6 +32,9 @@ export default class IPFSMerkleMap implements IPFSMapInterface {
         this._parentMap = _parentMap;
         this._leavesMap = _leavesMap;
     }
+    putAllSync(): Promise<{ node: CID; key: CID | undefined; }[]> {
+        throw new Error('Method not implemented.');
+    }
     cid(): Promise<CID> {
         throw new Error('Method not implemented.');
     }

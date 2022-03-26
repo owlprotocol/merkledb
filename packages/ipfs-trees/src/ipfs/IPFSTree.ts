@@ -1,8 +1,6 @@
 import { CID } from 'multiformats';
 import { ByteView, encode as encodeJSON, decode as decodeJSON, code as codeJSON } from '@ipld/dag-json';
-import { encode as encodeCBOR, decode as decodeCBOR, code as codeCBOR } from '@ipld/dag-json';
 import { sha256 } from 'multiformats/hashes/sha2';
-import { IPFS } from 'ipfs';
 import { Digest } from 'multiformats/hashes/digest';
 
 import TreeSearch from '../tree/TreeSearch';
@@ -246,5 +244,21 @@ export default class IPFSTree extends TreeSearch<IPFSTreeKey> implements IPFSMap
         for await (const n of this.inOrderTraversal()) {
             yield (n as IPFSTree).putWithKey();
         }
+    }
+    async putAllSync(): Promise<{ node: CID; key: CID | undefined }[]> {
+        const nodePromises = [];
+        const keyPromises = [];
+        for await (const n of this.putAll()) {
+            nodePromises.push(n.node);
+            keyPromises.push(n.key);
+        }
+
+        const nodeP = Promise.all(nodePromises);
+        const keyP = Promise.all(keyPromises);
+        const [nodes, keys] = await Promise.all([nodeP, keyP]);
+        const v = nodes.map((n, i) => {
+            return { node: n, key: keys[i] };
+        });
+        return v;
     }
 }
