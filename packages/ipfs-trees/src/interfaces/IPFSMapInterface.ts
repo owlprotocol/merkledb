@@ -25,5 +25,14 @@ export default interface IPFSMapInterface extends MapInterface<string, CID | und
 
     getValuesGen():AsyncGenerator<Record<string, any>>
     getValues(): Promise<Record<string, any>>
+
+    getRangeGen(start: string, end: string): AsyncGenerator<IPFSMapInterface>
+    getRange(start: string, end: string): Promise<IPFSMapInterface[]>
+
+    getRangeIdxGen(startIdx: number, end: number): AsyncGenerator<IPFSMapInterface>
+    getRangeIdx(startIdx: number, end: number): Promise<IPFSMapInterface[]>
+
+    rootKey(): Promise<string>,
+    rootValue(): Promise<Record<string, any>>
     */
 }
