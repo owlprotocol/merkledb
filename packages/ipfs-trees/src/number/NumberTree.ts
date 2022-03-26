@@ -1,3 +1,4 @@
+//@ts-nocheck
 import NumberTreeIndex from './NumberTreeIndex';
 import TreeSearch from '../tree/TreeSearch';
 

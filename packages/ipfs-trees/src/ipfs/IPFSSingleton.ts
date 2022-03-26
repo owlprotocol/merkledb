@@ -27,7 +27,7 @@ export default class IPFSSingleton {
 
         //Mock IPFS Storage
         const digest = await sha256.digest(data);
-        let cid: CID;
+        let cid: CID | undefined;
         if (!options || options.version == 0) {
             //dag-pb
             cid = CID.create(0, 112, digest);
@@ -37,6 +37,7 @@ export default class IPFSSingleton {
             cid = CID.create(1, codeCBOR, digest);
         }
 
+        if (!cid) throw Error(`${cid} cid put(${data}) - ${options}`)
         this.local[cid!.toString()] = data;
         return cid!;
     }
@@ -48,6 +49,7 @@ export default class IPFSSingleton {
         //Mock IPFS Storage
         const digest = await sha256.digest(data);
         const cid = CID.create(1, codeJSON, digest);
+        if (!cid) throw Error(`${cid} cid put(${data}) - ${rec}`)
         this.local[cid.toString()] = data;
         return cid;
     }
@@ -59,6 +61,7 @@ export default class IPFSSingleton {
         //Mock IPFS Storage
         const digest = await sha256.digest(data);
         const cid = CID.create(1, codeCBOR, digest);
+        if (!cid) throw Error(`${cid} cid put(${data}) - ${rec}`)
         this.local[cid.toString()] = data;
         return cid;
     }
@@ -74,6 +77,8 @@ export default class IPFSSingleton {
     }
 
     static async getJSON(cid: CID): Promise<Record<string, any>> {
+        if (!cid) throw Error(`${cid} invalid`)
+
         let data: Uint8Array;
         if (this.ipfs) data = await this.ipfs.block.get(cid);
         else data = this.local[cid.toString()];

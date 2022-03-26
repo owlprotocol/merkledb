@@ -2,14 +2,15 @@ import Comparable from '../interfaces/Comparable';
 import Tree from './Tree';
 
 export default abstract class TreeSearch<K extends Comparable<any>> extends Tree<K> {
+    abstract isNull(): boolean
     //Binary search
     //Yields searched nodes to enable cancelling search on timeout
     //Returns undefined if no result match
     static async *searchGenerator<K extends Comparable<any>, T extends TreeSearch<K>>(
-        root: T | undefined,
+        root: T,
         a: K,
     ): AsyncGenerator<T> {
-        if (!root) {
+        if (root.isNull()) {
             return;
         }
 
@@ -46,11 +47,14 @@ export default abstract class TreeSearch<K extends Comparable<any>> extends Tree
 
     //Inserts and returns root
     static async *insertGenerator<K extends Comparable<any>, T extends TreeSearch<K>>(
-        root: T | undefined,
+        root: T,
         a: T,
     ): AsyncGenerator<T> {
-        if (!root) {
+        if (!root || root.isNull()) {
             yield a;
+            return;
+        } else if (!a || a.isNull()) {
+            yield root;
             return;
         }
 

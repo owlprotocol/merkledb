@@ -51,8 +51,8 @@ describe('IPFSTree.test.ts', () => {
         it('getKey()', async () => {
             const node0 = IPFSTree.createLeafWithKey('0', cid);
             const key = await node0.getKey();
-            assert.equal(key.key, '0');
-            assert.equal(key.valueCID, cid);
+            assert.equal(key!.key, '0');
+            assert.equal(key!.valueCID, cid);
         });
 
         it('withKey()', async () => {
@@ -60,8 +60,8 @@ describe('IPFSTree.test.ts', () => {
             const node1 = await node0.withKey(IPFSTreeKey.create('1', cid));
 
             const key = await node1.getKey();
-            assert.equal(key.key, '1');
-            assert.equal(key.valueCID, cid);
+            assert.equal(key!.key, '1');
+            assert.equal(key!.valueCID, cid);
 
             assert.notEqual(node1, node0);
             assert.notEqual(key, await node0.getKey());
@@ -125,12 +125,12 @@ describe('IPFSTree.test.ts', () => {
                 assert.equal(IPFSSingleton._totalNetworkGet, 1, 'IPFSTree._totalNetworkGet');
 
                 const node0Key = await node0.getKey();
-                await node0Key.put();
+                await node0Key!.put();
                 assert.equal(IPFSSingleton._totalNetworkPut, 1, 'IPFSTreeIndex._totalNetworkPut');
 
                 const node0FromCIDKey = await node0FromCID.getKey();
                 assert.equal(IPFSSingleton._totalNetworkGet, 1, 'IPFSTreeIndex._totalNetworkGet');
-                assert.isTrue(node0FromCIDKey.equals(node0Key), 'node0FromCIDKey.key != node0.key');
+                assert.isTrue(node0FromCIDKey!.equals(node0Key!), 'node0FromCIDKey.key != node0.key');
             });
         });
     });
@@ -141,6 +141,7 @@ describe('IPFSTree.test.ts', () => {
             const searchResultContent = await searchResult!.getKey();
 
             assert.isTrue(searchResultContent.equals(IPFSTreeKey.create('3', cid)));
+            //@ts-expect-error
             assert.equal(searchResult, node3);
         });
 
@@ -149,6 +150,7 @@ describe('IPFSTree.test.ts', () => {
             const searchResultContent = await searchResult!.getKey();
 
             assert.isTrue(searchResultContent.equals(IPFSTreeKey.create('1', cid)));
+            //@ts-expect-error
             assert.equal(searchResult, node1);
         });
 
@@ -190,7 +192,7 @@ describe('IPFSTree.test.ts', () => {
                  *             \
                  *             node3
                  */
-                const node3 = IPFSTree.createLeafWithKey('3', cid);
+                const node3 = IPFSTree.createLeafWithKey('3', cid)!;
                 const node2 = await IPFSTree.createLeafWithKey('2', cid).withRight(node3);
                 const node1 = await IPFSTree.createLeafWithKey('1', cid).withRight(node2);
                 const node0 = await IPFSTree.createLeafWithKey('0', cid).withRight(node1);
@@ -220,8 +222,9 @@ describe('IPFSTree.test.ts', () => {
         describe('insert', () => {
             it('null', async () => {
                 const node0 = IPFSTree.createLeafWithKey('0', cid);
-                const tree0 = undefined;
+                const tree0 = IPFSTree.createNull();
                 let tree1: IPFSTree;
+                //@ts-expect-error
                 for await (const n of IPFSTree.insertGenerator(tree0, node0)) {
                     tree1 = n as IPFSTree;
                 }
@@ -238,6 +241,7 @@ describe('IPFSTree.test.ts', () => {
                 const node1 = IPFSTree.createLeafWithKey('1', cid);
                 const tree0 = node0;
                 let tree1: IPFSTree;
+                //@ts-expect-error
                 for await (const n of IPFSTree.insertGenerator(tree0, node1)) {
                     tree1 = n as IPFSTree;
                 }
@@ -266,6 +270,7 @@ describe('IPFSTree.test.ts', () => {
                 const node3 = IPFSTree.createLeafWithKey('3', cid);
                 const tree0 = node0;
                 let tree1: IPFSTree;
+                //@ts-expect-error
                 for await (const n of IPFSTree.insertGenerator(tree0, node3)) {
                     tree1 = n as IPFSTree;
                 }
@@ -305,6 +310,7 @@ describe('IPFSTree.test.ts', () => {
                 const node2 = IPFSTree.createLeafWithKey('2', cid);
                 const tree0 = node0;
                 let tree1: IPFSTree;
+                //@ts-expect-error
                 for await (const n of IPFSTree.insertGenerator(tree0, node2)) {
                     tree1 = n as IPFSTree;
                 }
@@ -318,6 +324,7 @@ describe('IPFSTree.test.ts', () => {
             it('insert(0)-1-2-3-4', async () => {
                 const node0 = IPFSTree.createLeafWithKey('0', cid);
                 let tree1 = tree;
+                //@ts-expect-error
                 for await (const n of IPFSTree.insertGenerator(tree, node0)) {
                     tree1 = n as IPFSTree;
                 }
@@ -331,6 +338,7 @@ describe('IPFSTree.test.ts', () => {
             it('1-2-3-4-insert(5)', async () => {
                 const node5 = IPFSTree.createLeafWithKey('5', cid);
                 let tree1 = tree;
+                //@ts-expect-error
                 for await (const n of IPFSTree.insertGenerator(tree, node5)) {
                     tree1 = n as IPFSTree;
                 }
@@ -344,6 +352,7 @@ describe('IPFSTree.test.ts', () => {
             it('1-2-3-4 duplicate', async () => {
                 const node4 = IPFSTree.createLeafWithKey('4', cid);
                 let tree1 = tree;
+                //@ts-expect-error
                 for await (const n of IPFSTree.insertGenerator(tree1, node4)) {
                     tree1 = n as IPFSTree;
                 }
@@ -362,6 +371,7 @@ describe('IPFSTree.test.ts', () => {
                 let tree1 = node0;
                 for (let i = 1; i < 100; i++) {
                     values.push(`${i}`);
+                    //@ts-expect-error
                     tree1 = (await tree1.insert(IPFSTree.createLeafWithKey(`${i}`, cid))) as IPFSTree;
                 }
 
@@ -386,6 +396,7 @@ describe('IPFSTree.test.ts', () => {
                 let tree1 = node0;
                 for (let i = 1; i < values.length; i++) {
                     const v = values[i];
+                    //@ts-expect-error
                     tree1 = (await tree1.insert(IPFSTree.createLeafWithKey(v, cid))) as IPFSTree;
                 }
 
@@ -402,6 +413,7 @@ describe('IPFSTree.test.ts', () => {
                 for (let i = 1; i < 1000; i++) {
                     const v = Math.ceil(Math.random() * 100);
                     values.push(`${v}`);
+                    //@ts-expect-error
                     tree1 = (await tree1.insert(IPFSTree.createLeafWithKey(`${v}`, cid))) as IPFSTree;
                 }
 
