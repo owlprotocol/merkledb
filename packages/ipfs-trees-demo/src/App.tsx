@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { IPFSMapInterface, IPFSTree } from '@owlprotocol/ipfs-trees';
 import logo from './logo.svg';
 import './App.css';
 
@@ -7,6 +8,31 @@ function App() {
 
     //https://vitejs.dev/guide/env-and-mode.html#env-variables
     const title = import.meta.env.VITE_APP_TITLE;
+
+    useEffect(async () => {
+        //Enable real IPFS connection instead of in-memory cache
+        //IPFSSingleton.setIPFS()
+
+        let map: IPFSMapInterface = IPFSTree.createNull();
+        map = await map.setJSON('3', { message: 'node3' });
+
+        console.debug(map)
+        /*
+        map = await map.setJSON('3', { message: 'node3' });
+        map = await map.setJSON('2', { message: 'node2' });
+        map = await map.setJSON('4', { message: 'node4' });
+        map = await map.setJSON('1', { message: 'node1' });
+        map = await map.setJSON('5', { message: 'node5' });
+
+        const cid = await map.cid();
+        const cidList = await map.putAllSync();
+        console.debug({ cid, cidList })
+
+        const map2: IPFSMapInterface = await IPFSTree.createFromCID(cid);
+        //Fetches leaf nodes
+        const n1 = await map2.getJSON('1');
+        */
+    }, [])
 
     return (
         <div className='App'>

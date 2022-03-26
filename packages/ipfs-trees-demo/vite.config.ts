@@ -16,6 +16,7 @@ import rollupNodePolyFill from 'rollup-plugin-node-polyfills';
 export default defineConfig({
     plugins: [
         react(),
+        /*
         Checker({
             typescript: true,
             overlay: true,
@@ -23,6 +24,7 @@ export default defineConfig({
                 lintCommand: 'eslint --ext .ts,.tsx src --fix',
             },
         }),
+        */
     ],
     resolve: {
         alias: {
@@ -72,6 +74,7 @@ export default defineConfig({
                 NodeModulesPolyfillPlugin(),
             ],
         },
+        include: ['@owlprotocol/ipfs-trees']
     },
     build: {
         /*
