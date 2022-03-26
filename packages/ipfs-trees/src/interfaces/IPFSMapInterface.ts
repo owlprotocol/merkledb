@@ -8,6 +8,6 @@ export default interface IPFSMapInterface extends MapInterface<string, CID | und
     getJSON(k: string): Promise<Record<string, any> | undefined>;
     setJSON(k: string, v: Record<string, any>): Promise<IPFSMapInterface>;
 
-    //getCBOR(k: string): Promise<Record<string, any> | undefined>;
-    //setCBOR(k: string, v: Record<string, any>): Promise<IPFSMapInterface>;
+    getCBOR(k: string): Promise<Record<string, any> | undefined>;
+    setCBOR(k: string, v: Record<string, any>): Promise<IPFSMapInterface>;
 }

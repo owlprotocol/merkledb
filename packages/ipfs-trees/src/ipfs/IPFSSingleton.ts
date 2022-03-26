@@ -5,10 +5,10 @@ import { CID } from 'multiformats';
 import { sha256 } from 'multiformats/hashes/sha2';
 
 export default class IPFSSingleton {
-    public static readonly ipfs: IPFS | undefined;
-    public static _totalNetworkPut = 0;
-    public static _totalNetworkGet = 0;
-    public static readonly local: { [key: string]: any } = {};
+    private static readonly ipfs: IPFS | undefined;
+    static _totalNetworkPut = 0;
+    static _totalNetworkGet = 0;
+    private static readonly local: { [key: string]: any } = {};
 
     private constructor() { }
     public static setIPFS(ipfs: IPFS) {

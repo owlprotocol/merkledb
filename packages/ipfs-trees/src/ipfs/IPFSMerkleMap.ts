@@ -1,6 +1,13 @@
 import { CID } from 'multiformats';
-import { ByteView, encode as encodeJSON, decode as decodeJSON, code as codeJSON } from '@ipld/dag-json';
-import { encode as encodeCBOR, decode as decodeCBOR, code as codeCBOR } from '@ipld/dag-json';
+import {
+    ByteView,
+    encode as encodeJSON,
+    decode as decodeJSON,
+    code as codeJSON,
+    encode as encodeCBOR,
+    decode as decodeCBOR,
+    code as codeCBOR,
+} from '@ipld/dag-json';
 //@ts-expect-error
 import { keccak256 } from '@multiformats/sha3';
 import IPFSMapInterface from '../interfaces/IPFSMapInterface';
@@ -35,29 +42,29 @@ export default class IPFSMerkleMap implements IPFSMapInterface {
     }
 
     get(k: string): Promise<CID | undefined> {
-        throw new Error('Method not implemented.');
+        return this._leavesMap.get(k);
     }
     async set(k: string, v: CID): Promise<IPFSMapInterface> {
         throw new Error('Method not implemented.');
     }
+
     getJSON(k: string): Promise<Record<string, any> | undefined> {
-        throw new Error('Method not implemented.');
+        return this._leavesMap.getJSON(k);
     }
     async setJSON(k: string, v: Record<string, any>): Promise<IPFSMerkleMap> {
         throw new Error('Method not implemented.');
     }
+
     async getCBOR(k: string): Promise<Record<string, any> | undefined> {
-        const cid = await this.get(k);
-        if (!cid) return undefined;
-        const data = await IPFSSingleton.ipfs!.block.get(cid);
-        return decodeCBOR(data);
+        return this._leavesMap.getCBOR(k);
     }
     async setCBOR(k: string, v: Record<string, any>): Promise<IPFSMerkleMap> {
         const data = encodeCBOR(v);
-        const digest = keccak256(data.buffer);
-        await IPFSSingleton.ipfs!.block.put(data);
+        //Use keccak256 hash
+        const digestKeccak = keccak256(data.buffer);
+        const cid = await IPFSSingleton.putCBOR(data);
 
-        const merkleTree = await this._merkleTree.insertHash(digest);
+        const merkleTree = await this._merkleTree.insertHash(digestKeccak);
         const parentMap = await this._parentMap.setJSON(k, v);
         const leavesMap = await this._leavesMap.setJSON(k, v);
 
