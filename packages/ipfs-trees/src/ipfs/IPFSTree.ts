@@ -45,12 +45,11 @@ export default class IPFSTree extends TreeSearch<IPFSTreeKey> implements IPFSMap
         this._rightCID = rightCID;
     }
 
-    //Map
+    //Factory
     static createNull(): IPFSTree {
         return IPFSTree.createLeafWithKey('0', undefined);
     }
 
-    //Factory
     static create(
         key: IPFSTreeKey,
         left: IPFSTree | undefined,
@@ -81,6 +80,7 @@ export default class IPFSTree extends TreeSearch<IPFSTreeKey> implements IPFSMap
         return this.createWithKey(key, valueCID, undefined, undefined);
     }
 
+    //Async Factory
     //Factory helpers that ALWAYS create a copy
     async withKey(key: IPFSTreeKey) {
         if (!this._key) throw new Error('Node has no key!');

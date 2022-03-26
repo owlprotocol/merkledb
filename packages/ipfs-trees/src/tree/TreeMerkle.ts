@@ -2,7 +2,8 @@ export default abstract class TreeMerkle<H> {
     abstract getParent(): Promise<TreeMerkle<H> | undefined>;
     abstract getLeft(): Promise<TreeMerkle<H> | undefined>;
     abstract getRight(): Promise<TreeMerkle<H> | undefined>;
-    abstract getHash(): Promise<H>;
+    abstract getHash(): H | undefined;
+    abstract isNull(): boolean
 
     abstract setParent(a: TreeMerkle<H>): Promise<TreeMerkle<H>>;
 
@@ -19,6 +20,11 @@ export default abstract class TreeMerkle<H> {
         }
 
         return sibling;
+    }
+
+    async isRootNode(): Promise<boolean> {
+        const parent = await this.getParent();
+        return parent === undefined;
     }
 
     async isLeafNode(): Promise<boolean> {
@@ -48,10 +54,22 @@ export default abstract class TreeMerkle<H> {
     }
 
     //Insertion
-    static async *insertGenerator<H, T extends TreeMerkle<H>>(root: T | undefined, a: T): AsyncGenerator<T> {
-        if (!root) {
+    static async *insertGenerator<H, T extends TreeMerkle<H>>(root: T, a: T): AsyncGenerator<T> {
+        console.debug({ root, a })
+        if (root.isNull()) {
             //No root, return self
             yield a;
+            return;
+        } else if (a.isNull()) {
+            yield root;
+            return;
+        } else if (await root.isRootNode()) {
+            const newRoot = await root.join(a) as T;
+            yield newRoot;
+            return;
+        } else if (await a.isRootNode()) {
+            const newRoot = await a.join(root) as T;
+            yield newRoot;
             return;
         }
 
@@ -86,7 +104,7 @@ export default abstract class TreeMerkle<H> {
         }
     }
 
-    static async insert<H, T extends TreeMerkle<H>>(root: T | undefined, a: T): Promise<T> {
+    static async insert<H, T extends TreeMerkle<H>>(root: T, a: T): Promise<T> {
         const gen = TreeMerkle.insertGenerator(root, a);
         let n: T;
         for await (n of gen) {

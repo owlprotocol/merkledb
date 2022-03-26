@@ -2,6 +2,7 @@ import { CID } from 'multiformats';
 import { ByteView, encode, decode, code } from '@ipld/dag-json';
 //@ts-expect-error
 import { keccak256 } from '@multiformats/sha3';
+import { sha256 } from 'multiformats/hashes/sha2';
 import { Digest } from 'multiformats/hashes/digest';
 import TreeMerkle from '../tree/TreeMerkle';
 import { stringToDigest } from '../utils';
@@ -19,7 +20,7 @@ export interface IPFSMerkleData {
 }
 
 export default class IPFSMerkle extends TreeMerkle<Digest<18, number>> implements IPFSMerkleInterface {
-    private readonly _hash: Digest<18, number>;
+    private readonly _hash: Digest<18, number> | undefined;
     private readonly _left: IPFSMerkle | undefined;
     private readonly _right: IPFSMerkle | undefined;
     public getParentMap: IPFSMapInterface;
@@ -34,7 +35,7 @@ export default class IPFSMerkle extends TreeMerkle<Digest<18, number>> implement
     private _cidCache: CID | undefined;
 
     private constructor(
-        _hash: Digest<18, number>,
+        _hash: Digest<18, number> | undefined,
         _left: IPFSMerkle | undefined,
         _right: IPFSMerkle | undefined,
         _leftCID: CID | undefined,
@@ -54,10 +55,17 @@ export default class IPFSMerkle extends TreeMerkle<Digest<18, number>> implement
     }
 
     static async createNull(): Promise<IPFSMerkle> {
-        return IPFSMerkle.createLeaf(await stringToDigest('0'));
+        return IPFSMerkle.createLeaf(undefined);
     }
 
-    static async createLeaf(hash: Digest<18, number>): Promise<IPFSMerkle> {
+    getHash(): Digest<18, number> | undefined {
+        return this._hash;
+    }
+    isNull(): boolean {
+        return this.getHash() === undefined;
+    }
+
+    static createLeaf(hash: Digest<18, number> | undefined): IPFSMerkle {
         const nullMap = IPFSTree.createNull();
         return new IPFSMerkle(hash, undefined, undefined, undefined, undefined, nullMap);
     }
@@ -90,9 +98,7 @@ export default class IPFSMerkle extends TreeMerkle<Digest<18, number>> implement
     async getRight(): Promise<IPFSMerkle | undefined> {
         return this._right;
     }
-    async getHash(): Promise<Digest<18, number>> {
-        return this._hash;
-    }
+
 
     //@ts-expect-error
     async setParent(a: IPFSMerkle): Promise<IPFSMerkle | undefined> {
@@ -107,8 +113,13 @@ export default class IPFSMerkle extends TreeMerkle<Digest<18, number>> implement
     //No mutation
     //@ts-expect-error
     async join(a: IPFSMerkle): Promise<TreeMerkle<Digest<18, number>>> {
-        const hashThis = await this.getHash();
-        const hashA = await a.getHash();
+        //@ts-expect-error
+        if (this.isNull()) return a;
+        //@ts-expect-error
+        if (a.isNull()) return this;
+
+        const hashThis = this.getHash()!;
+        const hashA = a.getHash()!;
 
         const hashParent = await IPFSMerkle.joinDigests(hashThis, hashA);
         const nullMap = IPFSTree.createNull();
@@ -120,6 +131,7 @@ export default class IPFSMerkle extends TreeMerkle<Digest<18, number>> implement
     }
 
     static async joinDigests(a: Digest<18, number>, b: Digest<18, number>): Promise<Digest<18, number>> {
+        //console.debug({ a, b })
         if (a === undefined && b === undefined) throw new Error('Must have 1 leaf');
 
         if (a !== undefined && b === undefined) {
@@ -130,7 +142,7 @@ export default class IPFSMerkle extends TreeMerkle<Digest<18, number>> implement
             return keccak256.digest(b.digest);
         } else {
             //Both defined, compare
-            const cmp = Buffer.from(a!.digest).compare(Buffer.from(b!.digest));
+            const cmp = Buffer.from(a.digest).compare(Buffer.from(b.digest));
             if (cmp < 0) {
                 //[leaf1, leaf2]
                 const leaf1Bytes = a!.digest;
@@ -168,7 +180,8 @@ export default class IPFSMerkle extends TreeMerkle<Digest<18, number>> implement
     //Proof
     async *getProofGen(): AsyncGenerator<Digest<18, number>> {
         for await (const s of this.recurseSibling()) {
-            yield await s.getHash();
+            const h = s.getHash();
+            if (h !== undefined) yield h;
         }
     }
 
@@ -187,6 +200,7 @@ export default class IPFSMerkle extends TreeMerkle<Digest<18, number>> implement
 
     //IPFS
     async encode(): Promise<ByteView<IPFSMerkleData>> {
+        if (this.isNull()) throw new Error('null.encode()')
         if (this._encodeCache) return this._encodeCache;
 
         const leftCID = await this.getLeftCID();
@@ -194,7 +208,7 @@ export default class IPFSMerkle extends TreeMerkle<Digest<18, number>> implement
 
         //Data
         const data: IPFSMerkleData = {
-            hash: this._hash,
+            hash: this._hash!,
         };
         if (leftCID) data.leftCID = leftCID;
         if (rightCID) data.rightCID = rightCID;
@@ -211,19 +225,24 @@ export default class IPFSMerkle extends TreeMerkle<Digest<18, number>> implement
     }
 
     async digest(): Promise<Digest<18, number>> {
+        if (this.isNull()) throw new Error('null.digest()')
         if (this._digestCache) return this._digestCache;
-        this._digestCache = await keccak256.digest(this.encode());
+        //NOT to be confused with the internal hash which uses keccak
+        this._digestCache = await sha256.digest(await this.encode());
         return this._digestCache!;
     }
 
     async cid(): Promise<CID> {
+        if (this.isNull()) throw new Error('null.cid()')
         if (this._cidCache) return this._cidCache;
         const hash = await this.digest();
         this._cidCache = CID.create(1, code, hash);
         return this._cidCache;
     }
 
+    //Put
     async put(): Promise<CID> {
+        if (this.isNull()) throw new Error('null.put()')
         const data = await this.encode();
         const cid = await IPFSSingleton.put(data, { version: 1, format: 'dag-json' });
         return cid;

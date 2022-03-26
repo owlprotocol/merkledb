@@ -1,3 +1,4 @@
+//@ts-nocheck
 import TreeMerkle from '../tree/TreeMerkle';
 
 export default class TestTreeMerkle extends TreeMerkle<string> {
