@@ -5,7 +5,7 @@ import { zip } from 'lodash';
 import { MerkleTree } from 'merkletreejs';
 
 import asyncGeneratorToArray from '../utils/asyncGeneratorToArray';
-import IPFSTreeMerkle from './IPFSTreeMerkle';
+import IPFSTreeMerkle from './IPFSMerkle';
 import TreeMerkle from '../tree/TreeMerkle';
 import { digestEqual, digestToString, stringToDigest } from '../utils';
 
