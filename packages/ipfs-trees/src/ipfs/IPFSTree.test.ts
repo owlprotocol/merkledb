@@ -170,7 +170,7 @@ describe('IPFSTree.test.ts', () => {
                 });
                 IPFSSingleton.setIPFS(ipfs);
                 IPFSSingleton._totalNetworkGet = 0;
-                IPFSTreeIndex._totalNetworkPut = 0;
+                IPFSSingleton._totalNetworkPut = 0;
             });
 
             after(async () => {

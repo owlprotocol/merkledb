@@ -3,10 +3,10 @@ import { ByteView, encode, decode, code } from '@ipld/dag-json';
 //@ts-expect-error
 import { keccak256 } from '@multiformats/sha3';
 import { Digest } from 'multiformats/hashes/digest';
-import { IPFS } from 'ipfs';
 import TreeMerkle from '../tree/TreeMerkle';
 import { stringToDigest } from '../utils';
 import IPFSMerkleInterface from '../interfaces/IPFSMerkleInterface';
+import IPFSSingleton from './IPFSSingleton';
 
 export interface IPFSTreeMerkleData {
     hash: Digest<18, number>;
@@ -28,12 +28,6 @@ export default class IPFSTreeMerkle extends TreeMerkle<Digest<18, number>> imple
     private _encodeCache: ByteView<IPFSTreeMerkleData> | undefined;
     private _digestCache: Digest<18, number> | undefined;
     private _cidCache: CID | undefined;
-
-    //IPFS Client
-    private static _ipfs: IPFS;
-    //Development Stats
-    static _totalNetworkGet = 0;
-    static _totalNetworkPut = 0;
 
     private constructor(
         _hash: Digest<18, number>,
@@ -208,9 +202,8 @@ export default class IPFSTreeMerkle extends TreeMerkle<Digest<18, number>> imple
     }
 
     async put(): Promise<CID> {
-        IPFSTreeMerkle._totalNetworkPut += 1;
         const data = await this.encode();
-        const cid = await IPFSTreeMerkle._ipfs.block.put(data, { version: 1, format: 'dag-json' });
+        const cid = await IPFSSingleton.put(data, { version: 1, format: 'dag-json' });
         return cid;
     }
 }

@@ -3,7 +3,7 @@ import { ByteView, encode, decode, code } from '@ipld/dag-json';
 import { sha256 } from 'multiformats/hashes/sha2';
 import Comparable from '../interfaces/Comparable';
 import { Digest } from 'multiformats/hashes/digest';
-import { IPFS } from 'ipfs';
+import IPFSSingleton from './IPFSSingleton';
 
 export interface IPFSTreeIndexData {
     key: string;
@@ -19,16 +19,6 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
     private _digestCache: Digest<18, number> | undefined;
     private _cidCache: CID | undefined;
 
-    //IPFS Client
-    private static _ipfs: IPFS;
-    //Development Stats
-    static _totalNetworkGet = 0;
-    static _totalNetworkPut = 0;
-
-    static setIPFS(ipfs: IPFS) {
-        this._ipfs = ipfs;
-    }
-
     private constructor(key: string | number, valueCID: CID | undefined) {
         if (typeof key === 'number') this.key = `${key}`;
         else this.key = key;
@@ -42,8 +32,7 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
     }
 
     static async createFromCID(cid: CID): Promise<IPFSTreeIndex> {
-        this._totalNetworkGet += 1;
-        const data = await this._ipfs.block.get(cid);
+        const data = await IPFSSingleton.get(cid);
         return IPFSTreeIndex.decode(data);
     }
 
@@ -97,9 +86,8 @@ export default class IPFSTreeIndex implements Comparable<IPFSTreeIndex> {
 
     //Put Data
     async put(): Promise<CID> {
-        IPFSTreeIndex._totalNetworkPut += 1;
         const data = await this.encode();
-        const cid = await IPFSTreeIndex._ipfs.block.put(data, { version: 1, format: 'dag-json' });
+        const cid = await IPFSSingleton.put(data, { version: 1, format: 'dag-json' });
         return cid;
     }
 }
