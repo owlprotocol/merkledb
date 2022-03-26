@@ -229,24 +229,22 @@ export default class IPFSTree extends TreeSearch<IPFSTreeIndex> implements IPFSM
     //Put
     async put(): Promise<CID> {
         const data = await this.encode();
-        const cid = await IPFSSingleton.put(data, { version: 1, format: 'dag-json' });
+        const cid = IPFSSingleton.put(data, { version: 1, format: 'dag-json' });
         return cid;
     }
 
-    putWithKey(): { node: Promise<CID>; key: Promise<CID> | undefined } {
-        const promises: { node: Promise<CID>; key: Promise<CID> | undefined } = {
+    putWithKey(): { node: Promise<CID>; key: Promise<CID | undefined> } {
+        const promises: { node: Promise<CID>; key: Promise<CID | undefined> } = {
             node: this.put(),
-            key: undefined,
+            key: Promise.resolve(undefined),
         };
         if (this._key) promises.key = this._key.put();
         return promises;
     }
 
-    async *putAll(): AsyncGenerator<CID> {
+    async *putAll(): AsyncGenerator<{ node: Promise<CID>; key: Promise<CID | undefined> }> {
         for await (const n of this.inOrderTraversal()) {
-            const x = (n as IPFSTree).putWithKey();
-            await x.key;
-            yield await x.node;
+            yield (n as IPFSTree).putWithKey();
         }
     }
 }
