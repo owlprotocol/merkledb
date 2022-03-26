@@ -50,38 +50,6 @@ export default class IPFSTree extends TreeSearch<IPFSTreeKey> implements IPFSMap
         return IPFSTree.createLeafWithKey('0', undefined);
     }
 
-    //Get/Set KV
-    async get(k: string): Promise<CID | undefined> {
-        const resultNode = await this.search(IPFSTreeKey.create(k, undefined));
-        if (!resultNode) return undefined;
-
-        const resultIdx = await resultNode.getKey();
-        return resultIdx.valueCID;
-    }
-    async set(k: string, v: CID | undefined): Promise<IPFSTree> {
-        const leafNode = IPFSTree.createLeafWithKey(k, v);
-        const tree = await this.insert(leafNode);
-        return tree as IPFSTree;
-    }
-    async getJSON(k: string): Promise<Record<string, any> | undefined> {
-        const cid = await this.get(k);
-        if (!cid) return undefined;
-        return IPFSSingleton.getJSON(cid);
-    }
-    async setJSON(k: string, v: Record<string, any>): Promise<IPFSTree> {
-        const cid = await IPFSSingleton.putJSON(v);
-        return await this.set(k, cid);
-    }
-    async getCBOR(k: string): Promise<Record<string, any> | undefined> {
-        const cid = await this.get(k);
-        if (!cid) return undefined;
-        return IPFSSingleton.getCBOR(cid);
-    }
-    async setCBOR(k: string, v: Record<string, any>): Promise<IPFSTree> {
-        const cid = await IPFSSingleton.putCBOR(v);
-        return await this.set(k, cid);
-    }
-
     //Factory
     static create(
         key: IPFSTreeKey,
@@ -135,6 +103,38 @@ export default class IPFSTree extends TreeSearch<IPFSTreeKey> implements IPFSMap
     static async createFromCID(cid: CID): Promise<IPFSTree> {
         const data = await IPFSSingleton.get(cid);
         return IPFSTree.decode(data);
+    }
+
+    //Get/Set KV
+    async get(k: string): Promise<CID | undefined> {
+        const resultNode = await this.search(IPFSTreeKey.create(k, undefined));
+        if (!resultNode) return undefined;
+
+        const resultIdx = await resultNode.getKey();
+        return resultIdx.valueCID;
+    }
+    async set(k: string, v: CID | undefined): Promise<IPFSTree> {
+        const leafNode = IPFSTree.createLeafWithKey(k, v);
+        const tree = await this.insert(leafNode);
+        return tree as IPFSTree;
+    }
+    async getJSON(k: string): Promise<Record<string, any> | undefined> {
+        const cid = await this.get(k);
+        if (!cid) return undefined;
+        return IPFSSingleton.getJSON(cid);
+    }
+    async setJSON(k: string, v: Record<string, any>): Promise<IPFSTree> {
+        const cid = await IPFSSingleton.putJSON(v);
+        return await this.set(k, cid);
+    }
+    async getCBOR(k: string): Promise<Record<string, any> | undefined> {
+        const cid = await this.get(k);
+        if (!cid) return undefined;
+        return IPFSSingleton.getCBOR(cid);
+    }
+    async setCBOR(k: string, v: Record<string, any>): Promise<IPFSTree> {
+        const cid = await IPFSSingleton.putCBOR(v);
+        return await this.set(k, cid);
     }
 
     //Getters

@@ -77,7 +77,7 @@ export default abstract class TreeMerkle<H> {
 
         while (prevNodeParent) {
             if (!prevNodeSibling) throw new Error('No sibling!');
-            currNode = await currNode.join(prevNodeSibling!);
+            currNode = await currNode.join(prevNodeSibling!) as T;
             yield currNode as T;
 
             prevNode = prevNodeParent;

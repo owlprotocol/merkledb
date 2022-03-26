@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { assert } from 'chai';
 import { Digest } from 'multiformats/hashes/digest';
 import keccak256Fn from 'keccak256'; //keccak256

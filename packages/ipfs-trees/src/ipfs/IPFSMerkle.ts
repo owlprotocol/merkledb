@@ -7,94 +7,116 @@ import TreeMerkle from '../tree/TreeMerkle';
 import { stringToDigest } from '../utils';
 import IPFSMerkleInterface from '../interfaces/IPFSMerkleInterface';
 import IPFSSingleton from './IPFSSingleton';
+import IPFSMapInterface from '../interfaces/IPFSMapInterface';
+import IPFSTree from './IPFSTree';
 
-export interface IPFSTreeMerkleData {
+//TODO: Add map pointer for back ref
+//Currently back ref is not part of CID, requiring external tracking of links
+export interface IPFSMerkleData {
     hash: Digest<18, number>;
     leftCID?: CID | undefined;
     rightCID?: CID | undefined;
 }
 
-export default class IPFSTreeMerkle extends TreeMerkle<Digest<18, number>> implements IPFSMerkleInterface {
+export default class IPFSMerkle extends TreeMerkle<Digest<18, number>> implements IPFSMerkleInterface {
     private readonly _hash: Digest<18, number>;
-    private readonly _parent: IPFSTreeMerkle | undefined;
-    private readonly _left: IPFSTreeMerkle | undefined;
-    private readonly _right: IPFSTreeMerkle | undefined;
+    private readonly _left: IPFSMerkle | undefined;
+    private readonly _right: IPFSMerkle | undefined;
+    public getParentMap: IPFSMapInterface;
 
     //IPFS Pointers
     private readonly _leftCID: CID | undefined;
     private readonly _rightCID: CID | undefined;
 
     //memoization
-    private _encodeCache: ByteView<IPFSTreeMerkleData> | undefined;
+    private _encodeCache: ByteView<IPFSMerkleData> | undefined;
     private _digestCache: Digest<18, number> | undefined;
     private _cidCache: CID | undefined;
 
     private constructor(
         _hash: Digest<18, number>,
-        _parent: IPFSTreeMerkle | undefined,
-        _left: IPFSTreeMerkle | undefined,
-        _right: IPFSTreeMerkle | undefined,
+        _left: IPFSMerkle | undefined,
+        _right: IPFSMerkle | undefined,
         _leftCID: CID | undefined,
         _rightCID: CID | undefined,
+        getParentMap: IPFSMapInterface
     ) {
         super();
         this._hash = _hash;
-        this._parent = _parent;
         this._left = _left;
         this._right = _right;
         this._leftCID = _leftCID;
         this._rightCID = _rightCID;
+        this.getParentMap = getParentMap;
+    }
+    getProof(): Promise<Digest<18, number>[]> {
+        throw new Error('Method not implemented.');
     }
 
-    static async createNull(): Promise<IPFSTreeMerkle> {
-        return IPFSTreeMerkle.createLeaf(await stringToDigest('0'));
+    static async createNull(): Promise<IPFSMerkle> {
+        return IPFSMerkle.createLeaf(await stringToDigest('0'));
     }
 
-    static async createLeaf(hash: Digest<18, number>): Promise<IPFSTreeMerkle> {
-        return new IPFSTreeMerkle(hash, undefined, undefined, undefined, undefined, undefined);
+    static async createLeaf(hash: Digest<18, number>): Promise<IPFSMerkle> {
+        const nullMap = IPFSTree.createNull();
+        return new IPFSMerkle(hash, undefined, undefined, undefined, undefined, nullMap);
     }
 
-    static createWithCIDs(
-        hash: Digest<18, number>,
-        leftCID: CID | undefined,
-        rightCID: CID | undefined,
-    ): IPFSTreeMerkle {
-        return new IPFSTreeMerkle(hash, undefined, undefined, undefined, leftCID, rightCID);
+    //Async Factory
+    static async createFromCID(cid: CID): Promise<IPFSMerkle> {
+        //IDEA: Cache factory
+        const data = await IPFSSingleton.get(cid);
+        return IPFSMerkle.decode(data);
     }
 
-    async insertHash(hash: Digest<18, number>): Promise<IPFSTreeMerkle> {
-        const leaf = await IPFSTreeMerkle.createLeaf(hash);
-        return TreeMerkle.insert(this, leaf) as Promise<IPFSTreeMerkle>;
+    async insertHash(hash: Digest<18, number>): Promise<IPFSMerkle> {
+        const leaf = await IPFSMerkle.createLeaf(hash);
+        //@ts-expect-error
+        return TreeMerkle.insert(this, leaf) as Promise<IPFSMerkle>;
     }
 
-    async getParent(): Promise<TreeMerkle<Digest<18, number>> | undefined> {
-        return this._parent;
+    //@ts-expect-error
+    async getParent(): Promise<IPFSMerkle | undefined> {
+        const cid = await this.cid();
+        const parent = await this.getParentMap.get(cid.toString());
+        return IPFSMerkle.createFromCID(cid);
     }
-    async getLeft(): Promise<TreeMerkle<Digest<18, number>> | undefined> {
+
+    //@ts-expect-error
+    async getLeft(): Promise<IPFSMerkle | undefined> {
         return this._left;
     }
-    async getRight(): Promise<TreeMerkle<Digest<18, number>> | undefined> {
+    //@ts-expect-error
+    async getRight(): Promise<IPFSMerkle | undefined> {
         return this._right;
     }
     async getHash(): Promise<Digest<18, number>> {
         return this._hash;
     }
-    async setParent(a: TreeMerkle<Digest<18, number>>): Promise<TreeMerkle<Digest<18, number>>> {
-        //@ts-expect-error
-        this._parent = a;
+
+    //@ts-expect-error
+    async setParent(a: IPFSMerkle): Promise<IPFSMerkle | undefined> {
+        //Use IPFSMap to avoid circular reference
+        const cid = await this.cid();
+        const parentCID = await a.cid();
+        //TODO: non-mutational
+        this.getParentMap = await this.getParentMap.set(cid.toString(), parentCID)
         return this;
     }
+
     //No mutation
-    async join(a: IPFSTreeMerkle): Promise<TreeMerkle<Digest<18, number>>> {
+    //@ts-expect-error
+    async join(a: IPFSMerkle): Promise<TreeMerkle<Digest<18, number>>> {
         const hashThis = await this.getHash();
         const hashA = await a.getHash();
 
-        const hashParent = await IPFSTreeMerkle.joinDigests(hashThis, hashA);
-        const parent = new IPFSTreeMerkle(hashParent, undefined, this, a, undefined, undefined);
+        const hashParent = await IPFSMerkle.joinDigests(hashThis, hashA);
+        const nullMap = IPFSTree.createNull();
+        const parent = new IPFSMerkle(hashParent, this, a, undefined, undefined, nullMap);
 
         await this.setParent(parent);
         await a.setParent(parent);
-        return parent;
+        return parent as TreeMerkle<Digest<18, number>>;
     }
 
     static async joinDigests(a: Digest<18, number>, b: Digest<18, number>): Promise<Digest<18, number>> {
@@ -144,7 +166,7 @@ export default class IPFSTreeMerkle extends TreeMerkle<Digest<18, number>> imple
     }
 
     //Proof
-    async *getProof(): AsyncGenerator<Digest<18, number>> {
+    async *getProofGen(): AsyncGenerator<Digest<18, number>> {
         for await (const s of this.recurseSibling()) {
             yield await s.getHash();
         }
@@ -155,7 +177,7 @@ export default class IPFSTreeMerkle extends TreeMerkle<Digest<18, number>> imple
         const rootDigest = proof.pop();
 
         for (const s of proof) {
-            leafDigest = await IPFSTreeMerkle.joinDigests(leafDigest!, s);
+            leafDigest = await IPFSMerkle.joinDigests(leafDigest!, s);
         }
 
         const leafBuff = Buffer.from(leafDigest!.digest.buffer);
@@ -164,14 +186,14 @@ export default class IPFSTreeMerkle extends TreeMerkle<Digest<18, number>> imple
     }
 
     //IPFS
-    async encode(): Promise<ByteView<IPFSTreeMerkleData>> {
+    async encode(): Promise<ByteView<IPFSMerkleData>> {
         if (this._encodeCache) return this._encodeCache;
 
         const leftCID = await this.getLeftCID();
         const rightCID = await this.getRightCID();
 
         //Data
-        const data: IPFSTreeMerkleData = {
+        const data: IPFSMerkleData = {
             hash: this._hash,
         };
         if (leftCID) data.leftCID = leftCID;
@@ -181,11 +203,11 @@ export default class IPFSTreeMerkle extends TreeMerkle<Digest<18, number>> imple
         return this._encodeCache;
     }
 
-    static decode(data: ByteView<IPFSTreeMerkleData>): IPFSTreeMerkle {
+    static decode(data: ByteView<IPFSMerkleData>): IPFSMerkle {
         //Decode
         const { hash, leftCID, rightCID } = decode(data);
-        this;
-        return new IPFSTreeMerkle(hash, undefined, undefined, undefined, leftCID, rightCID);
+        const nullMap = IPFSTree.createNull();
+        return new IPFSMerkle(hash, undefined, undefined, leftCID, rightCID, nullMap);
     }
 
     async digest(): Promise<Digest<18, number>> {
