@@ -1,14 +1,14 @@
 import Comparable from '../interfaces/Comparable';
 import Tree from './Tree';
 
-export default abstract class TreeSearch<T extends Comparable<any>> extends Tree<T> {
+export default abstract class TreeSearch<K extends Comparable<any>> extends Tree<K> {
     //Binary search
     //Yields searched nodes to enable cancelling search on timeout
     //Returns undefined if no result match
-    static async *searchGenerator<T extends Comparable<any>>(
-        root: TreeSearch<T> | undefined,
-        a: T,
-    ): AsyncGenerator<TreeSearch<T>> {
+    static async *searchGenerator<K extends Comparable<any>, T extends TreeSearch<K>>(
+        root: T | undefined,
+        a: K,
+    ): AsyncGenerator<T> {
         if (!root) {
             return;
         }
@@ -19,23 +19,23 @@ export default abstract class TreeSearch<T extends Comparable<any>> extends Tree
 
         //left < root < right
         if (a.lt(await root.getKey())) {
-            const leftNode = (await root.getLeft()) as TreeSearch<T>;
-            const searchRec = TreeSearch.searchGenerator(leftNode, a);
+            const leftNode = await root.getLeft();
+            const searchRec = TreeSearch.searchGenerator(leftNode as T, a);
             yield* searchRec;
         } else {
-            const rightNode = (await root.getRight()) as TreeSearch<T>;
-            const searchRec = TreeSearch.searchGenerator(rightNode, a);
+            const rightNode = await root.getRight();
+            const searchRec = TreeSearch.searchGenerator(rightNode as T, a);
             yield* searchRec;
         }
     }
 
-    async *searchGenerator(a: T): AsyncGenerator<TreeSearch<T>> {
+    async *searchGenerator(a: K): AsyncGenerator<TreeSearch<K>> {
         yield* TreeSearch.searchGenerator(this, a);
     }
 
-    async search(a: T): Promise<TreeSearch<T> | undefined> {
+    async search(a: K): Promise<TreeSearch<K> | undefined> {
         const gen = this.searchGenerator(a);
-        let n: TreeSearch<T>;
+        let n: TreeSearch<K>;
         for await (n of gen) {
             n = n;
         }
@@ -45,10 +45,10 @@ export default abstract class TreeSearch<T extends Comparable<any>> extends Tree
     }
 
     //Inserts and returns root
-    static async *insertGenerator<T extends Comparable<any>>(
-        root: TreeSearch<T> | undefined,
-        a: TreeSearch<T>,
-    ): AsyncGenerator<TreeSearch<T>> {
+    static async *insertGenerator<K extends Comparable<any>, T extends TreeSearch<K>>(
+        root: T | undefined,
+        a: T,
+    ): AsyncGenerator<T> {
         if (!root) {
             yield a;
             return;
@@ -62,33 +62,33 @@ export default abstract class TreeSearch<T extends Comparable<any>> extends Tree
 
         //left < root < right
         if ((await a.getKey()).lt(await root.getKey())) {
-            const leftNode = (await root.getLeft()) as TreeSearch<T> | undefined;
-            const gen = TreeSearch.insertGenerator(leftNode, a);
-            let n: TreeSearch<T>;
+            const leftNode = await root.getLeft();
+            const gen = TreeSearch.insertGenerator(leftNode as T, a);
+            let n: T;
             for await (n of gen) {
                 n = n;
                 yield n;
             }
-            yield (await root.withLeft(n!)) as TreeSearch<T>;
+            yield (await root.withLeft(n!)) as T;
         } else {
-            const rightNode = (await root.getRight()) as TreeSearch<T> | undefined;
-            const gen = TreeSearch.insertGenerator(rightNode, a);
-            let n: TreeSearch<T>;
+            const rightNode = await root.getRight();
+            const gen = TreeSearch.insertGenerator(rightNode as T, a);
+            let n: T;
             for await (n of gen) {
                 n = n;
                 yield n;
             }
-            yield (await root.withRight(n!)) as TreeSearch<T>;
+            yield (await root.withRight(n!)) as T;
         }
     }
 
-    async *insertGenerator(a: TreeSearch<T>): AsyncGenerator<TreeSearch<T>> {
+    async *insertGenerator(a: TreeSearch<K>): AsyncGenerator<TreeSearch<K>> {
         yield* TreeSearch.insertGenerator(this, a);
     }
 
-    async insert(a: TreeSearch<T>): Promise<TreeSearch<T>> {
+    async insert(a: TreeSearch<K>): Promise<TreeSearch<K>> {
         const gen = this.insertGenerator(a);
-        let n: TreeSearch<T>;
+        let n: TreeSearch<K>;
         for await (n of gen) {
             n = n;
         }

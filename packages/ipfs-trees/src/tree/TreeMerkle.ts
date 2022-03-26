@@ -1,17 +1,17 @@
-export default abstract class TreeMerkle<T> {
-    abstract getParent(): Promise<TreeMerkle<T> | undefined>;
-    abstract getLeft(): Promise<TreeMerkle<T> | undefined>;
-    abstract getRight(): Promise<TreeMerkle<T> | undefined>;
-    abstract getHash(): Promise<T>;
+export default abstract class TreeMerkle<H> {
+    abstract getParent(): Promise<TreeMerkle<H> | undefined>;
+    abstract getLeft(): Promise<TreeMerkle<H> | undefined>;
+    abstract getRight(): Promise<TreeMerkle<H> | undefined>;
+    abstract getHash(): Promise<H>;
 
-    abstract setParent(a: TreeMerkle<T>): Promise<TreeMerkle<T>>;
+    abstract setParent(a: TreeMerkle<H>): Promise<TreeMerkle<H>>;
 
-    async getSibling(): Promise<TreeMerkle<T> | undefined> {
+    async getSibling(): Promise<TreeMerkle<H> | undefined> {
         const parent = await this.getParent();
         if (!parent) return this;
 
         //Recurse up with sibling
-        let sibling: TreeMerkle<T> | undefined;
+        let sibling: TreeMerkle<H> | undefined;
         if (this === (await parent!.getLeft())) {
             sibling = await parent!.getRight();
         } else {
@@ -28,10 +28,10 @@ export default abstract class TreeMerkle<T> {
     }
 
     //Joins two nodes, creating a new node and making them siblings
-    abstract join(a: TreeMerkle<T>): Promise<TreeMerkle<T>>;
+    abstract join(a: TreeMerkle<H>): Promise<TreeMerkle<H>>;
 
     //Yield siblings for merkle proof, last yield is root
-    async *recurseSibling(): AsyncGenerator<TreeMerkle<T>> {
+    async *recurseSibling(): AsyncGenerator<TreeMerkle<H>> {
         const parent = await this.getParent();
         if (!parent) {
             //Yield root node
@@ -48,7 +48,7 @@ export default abstract class TreeMerkle<T> {
     }
 
     //Insertion
-    static async *insertGenerator<T>(root: TreeMerkle<T> | undefined, a: TreeMerkle<T>): AsyncGenerator<TreeMerkle<T>> {
+    static async *insertGenerator<H, T extends TreeMerkle<H>>(root: T | undefined, a: T): AsyncGenerator<T> {
         if (!root) {
             //No root, return self
             yield a;
@@ -57,7 +57,7 @@ export default abstract class TreeMerkle<T> {
 
         //Level-order traverse to find leaf node
         const levelOrderGen = TreeMerkle.levelOrderTraversal(root);
-        let leafNode: TreeMerkle<T>;
+        let leafNode: TreeMerkle<H>;
 
         for await (const n of levelOrderGen) {
             if (await n.isLeafNode()) {
@@ -73,12 +73,12 @@ export default abstract class TreeMerkle<T> {
 
         //Insert
         let currNode = await leafNode!.join(a);
-        yield currNode;
+        yield currNode as T;
 
         while (prevNodeParent) {
             if (!prevNodeSibling) throw new Error('No sibling!');
             currNode = await currNode.join(prevNodeSibling!);
-            yield currNode;
+            yield currNode as T;
 
             prevNode = prevNodeParent;
             prevNodeParent = await prevNode.getParent();
@@ -86,26 +86,26 @@ export default abstract class TreeMerkle<T> {
         }
     }
 
-    static async insert<T>(root: TreeMerkle<T> | undefined, a: TreeMerkle<T>): Promise<TreeMerkle<T>> {
+    static async insert<H, T extends TreeMerkle<H>>(root: T | undefined, a: T): Promise<T> {
         const gen = TreeMerkle.insertGenerator(root, a);
-        let n: TreeMerkle<T>;
+        let n: T;
         for await (n of gen) {
             n = n;
         }
         return n!;
     }
 
-    async *insertGenerator(a: TreeMerkle<T>): AsyncGenerator<TreeMerkle<T>> {
+    async *insertGenerator(a: TreeMerkle<H>): AsyncGenerator<TreeMerkle<H>> {
         yield* TreeMerkle.insertGenerator(this, a);
     }
 
-    async insert(a: TreeMerkle<T>): Promise<TreeMerkle<T>> {
+    async insert(a: TreeMerkle<H>): Promise<TreeMerkle<H>> {
         return TreeMerkle.insert(this, a);
     }
 
     //Level-order Traversal
-    static async *levelOrderTraversal<T>(root: TreeMerkle<T>): AsyncGenerator<TreeMerkle<T>> {
-        const arr: TreeMerkle<T>[] = [root];
+    static async *levelOrderTraversal<H, T extends TreeMerkle<H>>(root: T): AsyncGenerator<T> {
+        const arr: T[] = [root];
         while (arr.length > 0) {
             //FIFO
             const pop = arr.shift()!;
@@ -113,12 +113,12 @@ export default abstract class TreeMerkle<T> {
 
             const leftNode = await pop.getLeft();
             if (leftNode) {
-                arr.push(leftNode);
+                arr.push(leftNode as T);
             }
 
             const rightNode = await pop.getRight();
             if (rightNode) {
-                arr.push(rightNode);
+                arr.push(rightNode as T);
             }
         }
     }
