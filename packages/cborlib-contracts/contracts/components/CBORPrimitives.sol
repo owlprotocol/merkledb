@@ -9,7 +9,7 @@ import { CBORByteUtils as ByteUtils } from "./CBORByteUtils.sol";
 
 /**
  * @dev Parses out CBOR primitive values
- * `CBORDataStructures.sol` handles hashes and arrays. 
+ * `CBORDataStructures.sol` handles hashes and arrays.
  *
  */
 library CBORPrimitives {

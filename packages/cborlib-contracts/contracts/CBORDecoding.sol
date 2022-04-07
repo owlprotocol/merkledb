@@ -7,7 +7,7 @@ import { CBORSpec as Spec } from "./components/CBORSpec.sol";
 import { CBORPrimitives as Primitives } from "./components/CBORPrimitives.sol";
 import { CBORUtilities as Utils } from "./components/CBORUtilities.sol";
 import { CBORDataStructures as DataStructures } from "./components/CBORDataStructures.sol";
-import "./components/ByteUtils.sol";
+import { CBORByteUtils as ByteUtils } from "./components/CBORByteUtils.sol";
 
 /**
  * @dev Solidity library built for decoding CBOR data.
