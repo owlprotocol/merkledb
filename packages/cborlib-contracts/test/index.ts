@@ -118,10 +118,10 @@ describe("CBOR Decoding", function () {
         expect(decoded).to.deep.equal(toExpectedValue(myMapping));
     });
 
-    it.skip("Long mapping decoding", async function () {
+    it("Long mapping decoding", async function () {
         const myMapping = {};
         // @ts-ignore
-        for (let x = 0; x < 11; x++) myMapping[x] = { value: x };
+        for (let x = 0; x < 50; x++) myMapping[x] = { value: x };
         const decoded = await decoder.testDecodeCBORMapping(
             cbor.encode(myMapping)
         );

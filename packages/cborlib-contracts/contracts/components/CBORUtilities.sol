@@ -52,7 +52,7 @@ library CBORUtilities {
         // Arrays (Major Type: 4,5)
         else if (majorType == Spec.MajorType.Array ||
             majorType == Spec.MajorType.Map)
-            (, start, end) = DataStructures.parseDataStructure(encoding, cursor, majorType, shortCount);
+            (start, end) = DataStructures.parseDataStructure(encoding, cursor, majorType, shortCount);
 
         // Semantic Tags (Major Type: 6)
         else if (majorType == Spec.MajorType.Semantic)
