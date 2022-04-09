@@ -92,13 +92,21 @@ describe("CBOR Decoding", function () {
         expect(decoded).to.deep.equal(toExpectedValue(myMapping));
     });
 
-    it("Nested array", async function () {
-        const myMapping = [[1, 2, [3], 4]];
+    it("Long array decoding", async function () {
+        const myMapping = [];
+        for (let x = 0; x < 50; x++) myMapping.push(x);
         const decoded = await decoder.testDecodeCBORArray(
             cbor.encode(myMapping)
         );
-        // Assert keys equal
+        // Assert all keys are equal
         expect(decoded).to.deep.equal(toExpectedValue(myMapping));
+    });
+
+    it("Nested array", async function () {
+        const myArray = [[1, 2, [3], 4]];
+        const decoded = await decoder.testDecodeCBORArray(cbor.encode(myArray));
+        // Assert keys equal
+        expect(decoded).to.deep.equal(toExpectedValue(myArray));
     });
 
     it("Nested mapping", async function () {
@@ -107,6 +115,17 @@ describe("CBOR Decoding", function () {
             cbor.encode(myMapping)
         );
         // Assert keys equal
+        expect(decoded).to.deep.equal(toExpectedValue(myMapping));
+    });
+
+    it("Long mapping decoding", async function () {
+        const myMapping = {};
+        // @ts-ignore
+        for (let x = 0; x < 50; x++) myMapping[x] = { value: x };
+        const decoded = await decoder.testDecodeCBORMapping(
+            cbor.encode(myMapping)
+        );
+        // Assert all keys are equal
         expect(decoded).to.deep.equal(toExpectedValue(myMapping));
     });
 
@@ -122,16 +141,58 @@ describe("CBOR Decoding", function () {
         expect(decoded).to.deep.equal(toExpectedValue(character));
     });
 
-    // it("Linear Search Decoding", async function () {
-    //     const decoder = await CBORTestingFactory.deploy();
+    it("Linear Search Decoding", async function () {
+        const decoder = await CBORTestingFactory.deploy();
 
-    //     const values = cbor.encode({ a: 1, b: 2, c: 3 });
-    //     // Good call
-    //     await decoder.testDecodeCBORMappingGetValue(values, toHex("a"));
-    //     // Bad call
-    //     const call = decoder.testDecodeCBORMappingGetValue(values, toHex("x"));
-    //     await expect(call).to.be.revertedWith("Key not found!");
-    // });
+        const values = { a: 1, b: 2, c: 3 };
+        // Good call
+        const value = await decoder.testDecodeCBORMappingGetValue(
+            cbor.encode(values),
+            toHex("b")
+        );
+        expect(value).to.equal(toExpectedValue(values.b));
+        // Bad call
+        const call = decoder.testDecodeCBORMappingGetValue(
+            cbor.encode(values),
+            toHex("x")
+        );
+        await expect(call).to.be.revertedWith("Key not found!");
+    });
+
+    it("Linear Get Index", async function () {
+        const decoder = await CBORTestingFactory.deploy();
+
+        const values = ["a", "b", "c", "d"];
+        // Good call
+        const value = await decoder.testDecodeCBORArrayGetIndex(
+            cbor.encode(values),
+            toHex("d")
+        );
+        expect(value).to.equal(values.indexOf("d"));
+        // Bad call
+        const call = decoder.testDecodeCBORArrayGetIndex(
+            cbor.encode(values),
+            toHex("x")
+        );
+        await expect(call).to.be.revertedWith("Item not found!");
+    });
+
+    it("Linear Get Item", async function () {
+        const decoder = await CBORTestingFactory.deploy();
+
+        const values = ["a", "b", "c", "d"];
+        // Good call
+        const value = await decoder.testDecodeCBORArrayGetItem(
+            cbor.encode(values),
+            3
+        );
+        expect(value).to.equal(toExpectedValue(values[3]));
+        // Bad call
+        const call = decoder.testDecodeCBORArrayGetItem(cbor.encode(values), 5);
+        await expect(call).to.be.revertedWith(
+            "Index provided larger than list!"
+        );
+    });
 
     it("Test with game data", async () => {
         const profiles = [

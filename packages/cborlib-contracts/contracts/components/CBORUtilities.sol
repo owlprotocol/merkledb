@@ -6,7 +6,7 @@ import "hardhat/console.sol";
 import { CBORSpec as Spec } from "./CBORSpec.sol";
 import { CBORPrimitives as Primitives } from "./CBORPrimitives.sol";
 import { CBORDataStructures as DataStructures } from "./CBORDataStructures.sol";
-import "./ByteUtils.sol";
+import { CBORByteUtils as ByteUtils } from "./CBORByteUtils.sol";
 
 /**
  * @dev Solidity library built for decoding CBOR data.
@@ -52,7 +52,7 @@ library CBORUtilities {
         // Arrays (Major Type: 4,5)
         else if (majorType == Spec.MajorType.Array ||
             majorType == Spec.MajorType.Map)
-            (, start, end) = DataStructures.parseDataStructure(encoding, cursor, majorType, shortCount);
+            (start, end) = DataStructures.parseDataStructure(encoding, cursor, majorType, shortCount);
 
         // Semantic Tags (Major Type: 6)
         else if (majorType == Spec.MajorType.Semantic)
@@ -62,14 +62,15 @@ library CBORUtilities {
         else if (majorType == Spec.MajorType.Special)
             (start, end) = Primitives.parseSpecial(cursor, shortCount);
 
-        // Unsupported types
+        // Unsupported types (shouldn't ever really)
         else
             revert("Unimplemented Major Type!");
 
         // `end` is non-inclusive
         next = end;
         // If our data exists at field definition, nudge the cursor one
-        if (start == end) next++;
+        if (start == end)
+            next++;
 
         return (majorType, shortCount, start, end, next);
 
@@ -92,13 +93,11 @@ library CBORUtilities {
     ) internal view returns (
         bytes memory value
     ) {
-        if (start != end) {
+        if (start != end)
             // If we have a payload/count, slice it and short-circuit
             value = ByteUtils.sliceBytesMemory(encoding, start, end);
-            return value;
-        }
 
-        if (majorType == Spec.MajorType.Special) {
+        else if (majorType == Spec.MajorType.Special) {
             // Special means data is encoded INSIDE field
             if (shortCount == 21)
                 // True
@@ -112,12 +111,9 @@ library CBORUtilities {
             )
                 value = abi.encodePacked(Spec.UINT_FALSE);
 
-            return value;
-
-        }
-
-        // Data IS the shortCount (<24)
-        value = abi.encodePacked(shortCount);
+        } else
+            // Data IS the shortCount (<24)
+            value = abi.encodePacked(shortCount);
 
         return value;
 

@@ -40,9 +40,12 @@
   },
   "scripts": {
     "test": "hardhat test",
-    "compile": "hardhat compile"
+    "compile": "hardhat compile",
+    "clean": "hardhat clean",
+    "benchmark": "BENCHMARK=true REPORT_GAS=true pnpm hardhat test"
   },
   "dependencies": {
-    "@truffle/contract": "^4.5.1"
+    "@truffle/contract": "^4.5.1",
+    "bignumber.js": "^9.0.2"
   }
 }

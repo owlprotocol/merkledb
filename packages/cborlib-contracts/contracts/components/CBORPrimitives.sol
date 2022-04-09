@@ -5,10 +5,11 @@ import "hardhat/console.sol";
 
 import { CBORSpec as Spec } from "./CBORSpec.sol";
 import { CBORUtilities as Utils } from "./CBORUtilities.sol";
-import "./ByteUtils.sol";
+import { CBORByteUtils as ByteUtils } from "./CBORByteUtils.sol";
 
 /**
- * @dev Solidity library built for decoding CBOR data.
+ * @dev Parses out CBOR primitive values
+ * `CBORDataStructures.sol` handles hashes and arrays.
  *
  */
 library CBORPrimitives {
@@ -21,6 +22,7 @@ library CBORPrimitives {
      * @return dataEnd byte position where data ends
      */
     function parseInteger(
+        /* We don't need encodings to tell how long (bytes) the integer is */
         /*bytes memory encoding,*/
         uint cursor,
         uint shortCount
@@ -28,28 +30,23 @@ library CBORPrimitives {
         uint dataStart,
         uint dataEnd
     ) {
-        // Save our starting cursor (data can exist here)
-        dataStart = cursor;
+        // Save our starting cursor (past the field encoding)
+        dataStart = cursor + 1;
 
         // Marker for how far count goes
-        uint dataLength = 0;
+        dataEnd = dataStart;
 
         // Predetermined sizes
-        // if (shortCount < 24); // do nothing! (start byte = end byte)
-        if (shortCount == 24) dataLength = 1;
-        else if (shortCount == 25) dataLength = 2;
-        else if (shortCount == 26) dataLength = 4;
-        else if (shortCount == 27) dataLength = 8;
+        if (shortCount < 24)
+            // Shortcount IS the value, mark it special by returning cursor=start=end
+            // TODO - maybe update this to (dataStart, dataEnd)
+            return (cursor, cursor);
+        else if (shortCount == 24) dataEnd += 1;
+        else if (shortCount == 25) dataEnd += 2;
+        else if (shortCount == 26) dataEnd += 4;
+        else if (shortCount == 27) dataEnd += 8;
         else if (shortCount >= 28)
-            revert("Invalid RFC Shortcode!");
-
-        // Finalize data start/end points
-        if (dataLength != 0)
-            // Nudge cursor if data extends past field
-            dataStart++;
-        // Cursor starts on the next byte (non-inclusive)
-        dataEnd = dataStart + dataLength;
-
+            revert("Invalid integer RFC Shortcode!");
     }
 
     /**
@@ -73,12 +70,9 @@ library CBORPrimitives {
         uint countEnd = countStart;
 
         // These count lengths are (mostly) universal to all major types:
-        if (shortCount == 0) {
-            // Count is stored in shortCount, we can short-circuit and end early
-            dataStart = cursor;
-            dataEnd = dataStart;
-            return (dataStart, dataEnd);
-        }
+        if (shortCount == 0)
+            // We have an empty string, mark it special
+            return (cursor, cursor);
         else if (shortCount < 24) {
             // Count is stored in shortCount, we can short-circuit and end early
             dataStart = cursor + 1;
@@ -93,12 +87,7 @@ library CBORPrimitives {
             revert("Invalid RFC Shortcode!");
         else if (shortCount == 31)
             // Loop through our indefinite-length number until break marker
-            for ( ; cursor < encoding.length; ) {
-                cursor++;
-                countEnd++; // Non-inclusive means we want to include the marker
-                if (encoding[cursor] == Spec.BREAK_MARKER)
-                    break;
-            }
+            (, countEnd) = Utils.scanIndefiniteItems(encoding, countStart, 0);
 
         // Calculate the value of the count
         uint256 count = ByteUtils.bytesToUint256(
@@ -160,28 +149,25 @@ library CBORPrimitives {
     ) {
 
         // Save our starting cursor (data can exist here)
-        dataStart = cursor;
+        dataStart = cursor + 1;
 
         // Marker for how far count goes
-        uint dataLength = 0;
+        dataEnd = dataStart;
 
         // Predetermined sizes
         if (shortCount < 20)
             revert("Invalid RFC Shortcode!");
-        // 20-23 are false, true, null, and undefined (respectively)
-        else if (shortCount == 25) dataLength = 2;
-        else if (shortCount == 26) dataLength = 4;
-        else if (shortCount == 27) dataLength = 8;
+        if (shortCount >= 20 && shortCount <= 23)
+            // 20-23 are false, true, null, and undefined (respectively).
+            // There's no extra data to grab.
+            return (cursor, cursor);
+        else if (shortCount == 24) dataEnd += 1;
+        else if (shortCount == 25) dataEnd += 2;
+        else if (shortCount == 26) dataEnd += 4;
+        else if (shortCount == 27) dataEnd += 8;
         else if (shortCount >= 28)
             revert("Invalid RFC Shortcode!");
 
-        // Finalize data start/end points
-        if (dataLength != 0)
-            // Nudge cursor if data extends past field
-            dataStart++;
-        // Cursor starts on the next byte (non-inclusive)
-        dataEnd = dataStart + dataLength;
-
+        return (dataStart, dataEnd);
     }
-
 }

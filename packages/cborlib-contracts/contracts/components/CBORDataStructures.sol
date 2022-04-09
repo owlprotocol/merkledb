@@ -5,7 +5,7 @@ import "hardhat/console.sol";
 
 import { CBORSpec as Spec } from "./CBORSpec.sol";
 import { CBORUtilities as Utils } from "./CBORUtilities.sol";
-import "./ByteUtils.sol";
+import { CBORByteUtils as ByteUtils } from "./CBORByteUtils.sol";
 
 /**
  * @dev Solidity library built for decoding CBOR data.
@@ -28,11 +28,12 @@ library CBORDataStructures {
         bytes[2][] memory decodedMapping
     ) {
         // Track our mapping start
-        uint mappingCursor = cursor + 1;
+        uint256 mappingCursor = cursor;
 
-        // Count up how many keys we have
-        (uint totalItems, , ) = getDataStructureItemLength(encoding, mappingCursor, Spec.MajorType.Map, shortCount);
+        // Count up how many keys we have, set cursor
+        (uint totalItems, uint dataStart, ) = getDataStructureItemLength(encoding, mappingCursor, Spec.MajorType.Map, shortCount);
         require(totalItems % 2 == 0, "Invalid mapping provided!");
+        mappingCursor = dataStart;
 
         // Allocate new array
         decodedMapping = new bytes[2][](totalItems / 2);
@@ -73,15 +74,16 @@ library CBORDataStructures {
         bytes[] memory decodedArray
     ) {
         // Track our array start
-        uint arrayCursor = cursor + 1;
+        uint arrayCursor = cursor;
 
-        // Count up how many keys we have
-        (uint totalItems, , ) = getDataStructureItemLength(encoding, arrayCursor, Spec.MajorType.Array, shortCount);
+        // Count up how many keys we have, set cursor
+        (uint totalItems, uint dataStart, ) = getDataStructureItemLength(encoding, arrayCursor, Spec.MajorType.Array, shortCount);
+        arrayCursor = dataStart;
 
         // Allocate new array
         decodedArray = new bytes[](totalItems);
 
-        // Pull out our data
+        // Position cursor and Pull out our data
         for (uint item = 0; item < totalItems; item++) {
 
             // See what our field looks like
@@ -104,7 +106,6 @@ library CBORDataStructures {
      * @param cursor position where mapping data starts (in bytes)
      * @param majorType the corresponding major type identifier
      * @param shortCount short data identifier included in field info
-     * @return totalItems the number of total items in the data structure
      * @return dataStart the position where the values for the structure begin.
      * @return dataEnd the position where the values for the structure end.
      */
@@ -114,11 +115,10 @@ library CBORDataStructures {
         Spec.MajorType majorType,
         uint shortCount
     ) internal view returns (
-        uint totalItems,
         uint256 dataStart,
         uint256 dataEnd
     ) {
-
+        uint256 totalItems;
         // Count how many items we have, also get start position and *maybe* end (see notice).
         (totalItems, dataStart, dataEnd) = getDataStructureItemLength(encoding, cursor, majorType, shortCount);
 
@@ -132,10 +132,15 @@ library CBORDataStructures {
 
         // If it's not the first array expansion, include data structure header for future decoding.
         // We cannot return a recusively decoded structure due to polymorphism limitations
-        if (cursor != 0)
+        if (cursor != 0) {
             dataStart = cursor;
 
-        return (totalItems, dataStart, dataEnd);
+            // If we have an end marker, we need to skip past that too
+            if (shortCount == 31)
+                dataEnd++;
+        }
+
+        return (dataStart, dataEnd);
 
     }
 
@@ -172,8 +177,7 @@ library CBORDataStructures {
         if (shortCount == 31) {
             // Indefinite count
             // Loop through our indefinite-length structure until break marker.
-            // TODO - this could break?
-            (totalItems, dataEnd) = Utils.scanIndefiniteItems(encoding, cursor + 1, 0);
+            (totalItems, dataEnd) = Utils.scanIndefiniteItems(encoding, countEnd, 0);
             // Data starts right where count ends (which is cursor+1)
             dataStart = countEnd;
             return (totalItems, dataStart, dataEnd);
